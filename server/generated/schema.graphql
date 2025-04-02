@@ -2,20 +2,9 @@
 ### Do not make changes to this file directly
 
 
-type Link implements Node {
-  """Unique identifier for the resource"""
-  id: ID!
-
-  """Title of `Link` resource"""
-  title: String!
-
-  """URL of the `Link` resource"""
-  url: String!
-}
-
 type Mutation {
-  """Post a `Link` to the feed"""
-  post(title: String!, url: String!): Link!
+  """Post a `Reply` to the feed"""
+  post(title: String!, url: String!): Reply!
 }
 
 interface Node {
@@ -24,6 +13,43 @@ interface Node {
 }
 
 type Query {
-  """Get all `Link`s in the feed"""
-  feed: [Link!]!
+  """Get all replies in the feed"""
+  feed: [Reply!]!
+}
+
+type Reply implements Node {
+  """Author of the `Reply`"""
+  author: User
+
+  """Content of the `Reply`"""
+  content: String
+
+  """Creation time of the `Reply`"""
+  createdAt: String!
+
+  """Unique identifier for the resource"""
+  id: ID!
+
+  """Is the `Reply` a link?"""
+  isLink: Boolean!
+
+  """Parent of the `Reply`"""
+  parent: Reply
+
+  """Root of the `Reply`"""
+  root: Reply
+
+  """Title of `Reply`"""
+  title: String
+
+  """URL of the `Reply`"""
+  url: String
+
+  """Number of votes on the `Reply`"""
+  votes: Int!
+}
+
+type User {
+  """Replies by the `User`"""
+  replies: Reply
 }

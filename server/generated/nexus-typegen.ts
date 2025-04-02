@@ -28,17 +28,27 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
-  Link: { // root type
-    id: string; // ID!
-    title: string; // String!
-    url: string; // String!
-  }
   Mutation: {};
   Query: {};
+  Reply: { // root type
+    author?: NexusGenRootTypes['User'] | null; // User
+    content?: string | null; // String
+    createdAt: string; // String!
+    id: string; // ID!
+    isLink: boolean; // Boolean!
+    parent?: NexusGenRootTypes['Reply'] | null; // Reply
+    root?: NexusGenRootTypes['Reply'] | null; // Reply
+    title?: string | null; // String
+    url?: string | null; // String
+    votes: number; // Int!
+  }
+  User: { // root type
+    replies?: NexusGenRootTypes['Reply'] | null; // Reply
+  }
 }
 
 export interface NexusGenInterfaces {
-  Node: NexusGenRootTypes['Link'];
+  Node: NexusGenRootTypes['Reply'];
 }
 
 export interface NexusGenUnions {
@@ -49,16 +59,26 @@ export type NexusGenRootTypes = NexusGenInterfaces & NexusGenObjects
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
-  Link: { // field return type
-    id: string; // ID!
-    title: string; // String!
-    url: string; // String!
-  }
   Mutation: { // field return type
-    post: NexusGenRootTypes['Link']; // Link!
+    post: NexusGenRootTypes['Reply']; // Reply!
   }
   Query: { // field return type
-    feed: NexusGenRootTypes['Link'][]; // [Link!]!
+    feed: NexusGenRootTypes['Reply'][]; // [Reply!]!
+  }
+  Reply: { // field return type
+    author: NexusGenRootTypes['User'] | null; // User
+    content: string | null; // String
+    createdAt: string; // String!
+    id: string; // ID!
+    isLink: boolean; // Boolean!
+    parent: NexusGenRootTypes['Reply'] | null; // Reply
+    root: NexusGenRootTypes['Reply'] | null; // Reply
+    title: string | null; // String
+    url: string | null; // String
+    votes: number; // Int!
+  }
+  User: { // field return type
+    replies: NexusGenRootTypes['Reply'] | null; // Reply
   }
   Node: { // field return type
     id: string; // ID!
@@ -66,16 +86,26 @@ export interface NexusGenFieldTypes {
 }
 
 export interface NexusGenFieldTypeNames {
-  Link: { // field return type name
-    id: 'ID'
-    title: 'String'
-    url: 'String'
-  }
   Mutation: { // field return type name
-    post: 'Link'
+    post: 'Reply'
   }
   Query: { // field return type name
-    feed: 'Link'
+    feed: 'Reply'
+  }
+  Reply: { // field return type name
+    author: 'User'
+    content: 'String'
+    createdAt: 'String'
+    id: 'ID'
+    isLink: 'Boolean'
+    parent: 'Reply'
+    root: 'Reply'
+    title: 'String'
+    url: 'String'
+    votes: 'Int'
+  }
+  User: { // field return type name
+    replies: 'Reply'
   }
   Node: { // field return type name
     id: 'ID'
@@ -92,11 +122,11 @@ export interface NexusGenArgTypes {
 }
 
 export interface NexusGenAbstractTypeMembers {
-  Node: "Link"
+  Node: "Reply"
 }
 
 export interface NexusGenTypeInterfaces {
-  Link: "Node"
+  Reply: "Node"
 }
 
 export type NexusGenObjectNames = keyof NexusGenObjects;
