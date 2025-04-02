@@ -28,38 +28,75 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
+  Link: { // root type
+    id: string; // ID!
+    title: string; // String!
+    url: string; // String!
+  }
+  Mutation: {};
   Query: {};
 }
 
 export interface NexusGenInterfaces {
+  Node: NexusGenRootTypes['Link'];
 }
 
 export interface NexusGenUnions {
 }
 
-export type NexusGenRootTypes = NexusGenObjects
+export type NexusGenRootTypes = NexusGenInterfaces & NexusGenObjects
 
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
+  Link: { // field return type
+    id: string; // ID!
+    title: string; // String!
+    url: string; // String!
+  }
+  Mutation: { // field return type
+    post: NexusGenRootTypes['Link']; // Link!
+  }
   Query: { // field return type
-    ok: boolean; // Boolean!
+    feed: NexusGenRootTypes['Link'][]; // [Link!]!
+  }
+  Node: { // field return type
+    id: string; // ID!
   }
 }
 
 export interface NexusGenFieldTypeNames {
+  Link: { // field return type name
+    id: 'ID'
+    title: 'String'
+    url: 'String'
+  }
+  Mutation: { // field return type name
+    post: 'Link'
+  }
   Query: { // field return type name
-    ok: 'Boolean'
+    feed: 'Link'
+  }
+  Node: { // field return type name
+    id: 'ID'
   }
 }
 
 export interface NexusGenArgTypes {
+  Mutation: {
+    post: { // args
+      title: string; // String!
+      url: string; // String!
+    }
+  }
 }
 
 export interface NexusGenAbstractTypeMembers {
+  Node: "Link"
 }
 
 export interface NexusGenTypeInterfaces {
+  Link: "Node"
 }
 
 export type NexusGenObjectNames = keyof NexusGenObjects;
@@ -68,7 +105,7 @@ export type NexusGenInputNames = never;
 
 export type NexusGenEnumNames = never;
 
-export type NexusGenInterfaceNames = never;
+export type NexusGenInterfaceNames = keyof NexusGenInterfaces;
 
 export type NexusGenScalarNames = keyof NexusGenScalars;
 
@@ -76,7 +113,7 @@ export type NexusGenUnionNames = never;
 
 export type NexusGenObjectsUsingAbstractStrategyIsTypeOf = never;
 
-export type NexusGenAbstractsUsingStrategyResolveType = never;
+export type NexusGenAbstractsUsingStrategyResolveType = "Node";
 
 export type NexusGenFeaturesConfig = {
   abstractTypeStrategies: {
