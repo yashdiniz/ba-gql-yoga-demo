@@ -5,7 +5,7 @@ import { relations, sql, type InferSelectModel } from "drizzle-orm";
 export const users = createTable(
     'user', 
     {
-        ...idMixin, 
+        ...idMixin('u'), 
         name: text('name').
             notNull(),
         password: text('password').
@@ -32,7 +32,7 @@ export const userRelations = relations(users, ({ many }) => ({
 export const replies = createTable(
     'reply',
     {
-        ...idMixin,
+        ...idMixin('r'),
         rootId: text('root_id'),
         parentId: text('parent_id'),
         authorId: text('author_id').

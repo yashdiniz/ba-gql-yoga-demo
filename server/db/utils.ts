@@ -20,9 +20,15 @@ export const updatedAtMixin = {
   updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
 }
 
-export const idMixin = {
+export const idMixin = (prefix: string) => ({
   id: text('id').
     notNull().
     primaryKey().
-    $defaultFn(() => nanoid(5)),
+    $defaultFn(() => mnano(prefix)),
+})
+
+function mnano(prefix: string, size?: number) {
+  if (prefix.length !== 1) throw 'prefix must be 1 character'
+  if (size === undefined) size = 5
+  return prefix + nanoid(size)
 }
