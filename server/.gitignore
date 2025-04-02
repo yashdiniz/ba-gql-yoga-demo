@@ -15,6 +15,9 @@ node_modules/
 .env
 .env.production
 
+# database files
+db/pgdata/
+
 # logs
 logs/
 *.log

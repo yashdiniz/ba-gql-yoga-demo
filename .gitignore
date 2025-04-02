@@ -15,9 +15,6 @@ out/
 # deps
 node_modules/
 
-# database files
-db/pgdata/
-
 # env
 .env
 .env.production
