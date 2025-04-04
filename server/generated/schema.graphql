@@ -4,7 +4,13 @@
 
 type Mutation {
   """Post a `Reply` to the feed"""
-  post(title: String!, url: String!): Reply!
+  post(content: String, title: String!, url: String!): Reply!
+
+  """`Reply` to another reply (nested comment support)"""
+  reply(content: String!, parentId: ID!): Reply!
+
+  """Vote on a `Reply`, get current vote count after action."""
+  vote(replyId: ID!, type: VoteType!): Int!
 }
 
 interface Node {
@@ -13,19 +19,31 @@ interface Node {
 }
 
 type Query {
-  """Get all replies in the feed"""
-  feed: [Reply!]!
+  """Get the feed"""
+  feed: [Reply]!
+
+  """Get profile of `User` by name or ID"""
+  profile(id: ID, name: String): User!
+
+  "\n                Get nested replies of a root `Link`\n                NOTE: only works for `Link`s, will fail for non-links.\n            "
+  replies: [Reply]!
 }
 
 type Reply implements Node {
   """Author of the `Reply`"""
   author: User
 
-  """Content of the `Reply`"""
+  """`Reply` content"""
   content: String
 
-  """Creation time of the `Reply`"""
+  """`Reply` creation time"""
   createdAt: String!
+
+  """`Reply` depth level (used for rendering)"""
+  depth: Int!
+
+  """Has the `User` signed in voted on the post already?"""
+  hasVoted: Boolean!
 
   """Unique identifier for the resource"""
   id: ID!
@@ -39,17 +57,40 @@ type Reply implements Node {
   """Root of the `Reply`"""
   root: Reply
 
-  """Title of `Reply`"""
+  """`Reply` title"""
   title: String
 
-  """URL of the `Reply`"""
+  """`Reply` attached URL"""
   url: String
 
   """Number of votes on the `Reply`"""
   votes: Int!
 }
 
-type User {
+enum ReplyType {
+  ALL
+  LINKS
+  REPLIES
+}
+
+type User implements Node {
+  """`User` bio, describing themselves"""
+  about: String
+
+  """`User` creation time"""
+  createdAt: String
+
+  """Unique identifier for the resource"""
+  id: ID!
+
+  """`User` name"""
+  name: String
+
   """Replies by the `User`"""
-  replies: Reply
+  replies(type: ReplyType!): [Reply]
+}
+
+enum VoteType {
+  NO
+  UP
 }
