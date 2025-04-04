@@ -1,11 +1,11 @@
-import { boolean, primaryKey, text, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, integer, primaryKey, text, uniqueIndex } from "drizzle-orm/pg-core";
 import { createTable, idMixin, createdAtMixin, updatedAtMixin } from "./utils";
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 
 export const users = createTable(
-    'user', 
+    'user',
     {
-        ...idMixin('u'), 
+        ...idMixin('u'),
         name: text('name').
             notNull(),
         password: text('password').
@@ -36,13 +36,17 @@ export const replies = createTable(
         rootId: text('root_id'),
         parentId: text('parent_id'),
         authorId: text('author_id').
-            notNull().references(() => users.id, {onDelete: 'cascade'}),
+            notNull().references(() => users.id, { onDelete: 'cascade' }),
         title: text('title').
             notNull(),
         url: text('url'),
         content: text('content'),
+        depth: integer('depth').
+            notNull().
+            default(-1),
         isLink: boolean('is_link').
             notNull().
+            generatedAlwaysAs(sql`"root_id" IS NULL`).
             default(false),
         isDeleted: boolean('is_deleted').
             notNull().
@@ -72,7 +76,7 @@ export const repliesRelations = relations(replies, ({ one, many }) => ({
 }))
 
 export const votes = createTable(
-    'vote', 
+    'vote',
     {
         userId: text('user_id').
             notNull().
@@ -83,7 +87,7 @@ export const votes = createTable(
         ...createdAtMixin,
     },
     vote => [
-        primaryKey({columns: [vote.userId, vote.replyId]}),
+        primaryKey({ columns: [vote.userId, vote.replyId] }),
     ],
 )
 

@@ -1,5 +1,5 @@
 {
-  "id": "3d51fbbf-abf4-4738-976c-140fe79f342b",
+  "id": "79a434a8-2f4a-4e7b-af70-37dca1319507",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -50,11 +50,22 @@
           "primaryKey": false,
           "notNull": false
         },
+        "depth": {
+          "name": "depth",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": -1
+        },
         "is_link": {
           "name": "is_link",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
+          "generated": {
+            "as": "\"root_id\" IS NULL",
+            "type": "stored"
+          },
           "default": false
         },
         "is_deleted": {
