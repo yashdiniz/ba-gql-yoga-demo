@@ -1,6 +1,12 @@
-import { enumType, extendType, idArg, nonNull, objectType, stringArg } from "nexus";
+import { arg, enumType, extendType, idArg, nonNull, objectType, stringArg } from "nexus";
 import { Node } from "./Node";
 import { User } from "./User";
+import { newReplyService } from "@/domains/reply";
+import type { NexusGenObjects } from "@/generated/nexus-typegen";
+import { connectionFromArray } from "graphql-relay";
+import { serializeCursor } from "./utils";
+
+const replySvc = newReplyService()
 
 const VoteType = enumType({
     name: 'VoteType',
@@ -14,17 +20,29 @@ export const Reply = objectType({
         t.field('root', {
             type: Reply,
             description: 'Root of the `Reply`',
+            resolve(parent, args, ctx, info) {
+                return replySvc.rootOfReply(parent.id)
+            }
         })
         t.field('parent', {
             type: Reply,
             description: 'Parent of the `Reply`',
+            resolve(parent, args, ctx, info) {
+                return replySvc.parentOfReply(parent.id)
+            }
         })
-        t.field('author', {
+        t.nonNull.field('author', {
             type: User,
             description: 'Author of the `Reply`',
+            resolve(parent, args, ctx, info) {
+                return replySvc.authorOfReply(parent.id)
+            }
         })
-        t.nonNull.int('votes', {
+        t.nonNull.int('voteCount', {
             description: 'Number of votes on the `Reply`',
+        })
+        t.nonNull.int('replyCount', {
+            description: 'Number of replies on the `Reply`',
         })
         t.nonNull.boolean('hasVoted', {
             description: 'Has the `User` signed in voted on the post already?'
@@ -38,13 +56,10 @@ export const Reply = objectType({
         t.string('content', {
             description: '`Reply` content',
         })
-        t.nonNull.int('depth', {
-            description: '`Reply` depth level (used for rendering)',
-        })
         t.nonNull.boolean('isLink', {
             description: 'Is the `Reply` a link?',
         })
-        t.nonNull.string('createdAt', {
+        t.nonNull.date('createdAt', {
             description: '`Reply` creation time',
         })
     },
@@ -53,25 +68,59 @@ export const Reply = objectType({
 export const ReplyQuery = extendType({
     type: 'Query',
     definition(t) {
-        // TODO: use relay connection
-        t.nonNull.list.field('feed', {
+        t.connectionField('feed', {
             type: Reply,
+            disableBackwardPagination: true,
             description: 'Get the feed',
-            resolve(parent, args, context, info) {
-                // TODO: move to svc later
-                return []
+            async resolve(parent, args, context, info) {
+                console.log('Query.feed resolve', info.fieldNodes)
+                // const data = replySvc.feed({
+                //     first: args.first, after: args.after,
+
+                // })
+                return connectionFromArray<NexusGenObjects['Reply']>(/*data*/[{
+                    id: '0',
+                    isLink: true,
+                    createdAt: new Date(),
+                    hasVoted: false,
+                    replyCount: 0,
+                    voteCount: 0,
+                }, {
+                    id: '1',
+                    isLink: true,
+                    createdAt: new Date(),
+                    hasVoted: false,
+                    replyCount: 0,
+                    voteCount: 0,
+                }], args)
             },
+            cursorFromNode(node, args, ctx, info, forCursor) {
+                console.log('Query.feed cursorFromNode', info.fieldNodes)
+                return node ? serializeCursor({ i: node.id, v: node.createdAt })
+                    : ""
+            }
         })
-        // TODO: use relay connection
-        t.nonNull.list.field('replies', {
+        t.connectionField('replies', {
             type: Reply,
-            description: `
-                Get nested replies of a root \`Link\`
-                NOTE: only works for \`Link\`s, will fail for non-links.
-            `,
+            disableBackwardPagination: true,
+            description: 'Get nested replies of a root `Link`. NOTE: only works for `Link`s, will fail for non-links.',
+            additionalArgs: {
+                rootId: nonNull(idArg()),
+            },
             resolve(parent, args, context, info) {
                 // TODO: move to svc later
                 return []
+            }
+        })
+        t.nonNull.field('reply', {
+            type: Reply,
+            description: 'Get reply by ID',
+            args: {
+                id: nonNull(idArg()),
+            },
+            resolve(parent, args, context, info) {
+                // TODO: move to svc later
+                return null
             }
         })
     },
