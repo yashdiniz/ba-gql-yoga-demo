@@ -1,5 +1,5 @@
 {
-  "id": "79a434a8-2f4a-4e7b-af70-37dca1319507",
+  "id": "14def5db-b2c0-440d-8bb8-39fa9d435a82",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -49,13 +49,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "depth": {
-          "name": "depth",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": -1
         },
         "is_link": {
           "name": "is_link",

@@ -41,9 +41,6 @@ export const replies = createTable(
             notNull(),
         url: text('url'),
         content: text('content'),
-        depth: integer('depth').
-            notNull().
-            default(-1),
         isLink: boolean('is_link').
             notNull().
             generatedAlwaysAs(sql`"root_id" IS NULL`).
