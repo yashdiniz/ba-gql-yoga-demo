@@ -22,7 +22,7 @@ export const DateTime = scalarType({
     }
 })
 
-type Cursor = {
+type Cursor<ValueType> = {
     /**
      * `Cursor.id` shortened for msgpack optimisation
      */
@@ -30,7 +30,7 @@ type Cursor = {
     /**
      * `Cursor.value` shortened for msgpack optimisation
      */
-    v: string;
+    v: ValueType;
 }
 const encoder = new Encoder()
 const decoder = new Decoder()
@@ -40,7 +40,7 @@ const decoder = new Decoder()
  * @param v Cursor object
  * @returns base64-encoded cursor
  */
-export function serializeCursor(v: Cursor): string {
+export function serializeCursor<ValueType>(v: Cursor<ValueType>): string {
     return fromByteArray(encoder.encode(v))
 }
 
@@ -49,6 +49,6 @@ export function serializeCursor(v: Cursor): string {
  * @param v base64-encoded cursor
  * @returns Cursor object
  */
-export function parseCursor(v: string): Cursor {
-    return decoder.unpack(toByteArray(v)) as Cursor
+export function parseCursor<ValueType>(v: string): Cursor<ValueType> {
+    return decoder.unpack(toByteArray(v)) as Cursor<ValueType>
 }
