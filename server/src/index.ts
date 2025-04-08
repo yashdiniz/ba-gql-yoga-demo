@@ -2,6 +2,9 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { createYoga } from 'graphql-yoga'
 import { schema } from '@/schema/index.js'
+import { db } from '@/db'
+import { eq } from 'drizzle-orm'
+import { users } from '@/db/schema'
 
 const app = new Hono()
 
@@ -17,8 +20,25 @@ app.get('/', (c) => {
 })
 
 app.use('/gql', async (c) => {
+  // TODO: implement jwt authorization
+  // current workaround is adding user id to request header
+  const userId = c.req.header('Authorization')
+  const guest = {
+    id: '0',
+    name: 'guest',
+    password: '',
+    createdAt: new Date(),
+  }
+
+  const signedInUser = (userId ?
+    await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    }) : guest) ?? guest
+
   // @ts-ignore
-  return yoga.handle(c.req.raw, {})
+  return yoga.handle(c.req.raw, {
+    signedInUser,
+  })
 })
 
 serve({
