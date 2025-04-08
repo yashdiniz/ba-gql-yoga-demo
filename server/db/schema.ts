@@ -39,12 +39,10 @@ export const replies = createTable(
             notNull().references(() => users.id, { onDelete: 'cascade' }),
         title: text('title').
             notNull(),
-        url: text('url'),
         content: text('content'),
         isLink: boolean('is_link').
             notNull().
-            generatedAlwaysAs(sql`"root_id" IS NULL`).
-            default(false),
+            generatedAlwaysAs(sql`"root_id" IS NULL`),
         isDeleted: boolean('is_deleted').
             notNull().
             default(false),
@@ -92,10 +90,12 @@ export type Vote = InferSelectModel<typeof votes>
 
 export const voteRelations = relations(votes, ({ one }) => ({
     user: one(users, {
+        relationName: 'user',
         fields: [votes.userId],
         references: [users.id],
     }),
     reply: one(replies, {
+        relationName: 'reply',
         fields: [votes.replyId],
         references: [replies.id],
     }),

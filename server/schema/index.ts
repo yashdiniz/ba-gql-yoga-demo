@@ -10,11 +10,6 @@ export const schema = makeSchema({
         typegen: join(process.cwd(), 'generated/nexus-typegen.ts'),
     },
     plugins: [
-        connectionPlugin({
-            cursorFromNode(node, args, ctx, info, forCursor) {
-                console.log('cursorFromNode', { id: node.id, ref: node.createdAt })
-                return types.serializeCursor({ id: node.id, ref: node.createdAt })
-            },
-        }),
+        connectionPlugin(),
     ],
 })
