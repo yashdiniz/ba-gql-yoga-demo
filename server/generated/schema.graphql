@@ -2,15 +2,23 @@
 ### Do not make changes to this file directly
 
 
+"""
+The `Date` custom scalar type represents dates (sent over in integer form)
+"""
+scalar Date
+
 type Mutation {
-  """Post a `Reply` to the feed"""
-  post(content: String, title: String!, url: String!): Reply!
+  """Delete a `Reply`"""
+  delete(replyId: ID!): Boolean!
+
+  """Post a `Reply` (Link) to the feed"""
+  post(content: String, title: String!): Reply!
 
   """`Reply` to another reply (nested comment support)"""
   reply(content: String!, parentId: ID!): Reply!
 
-  """Vote on a `Reply`, get current vote count after action."""
-  vote(replyId: ID!, type: VoteType!): Int!
+  """Vote on a `Reply`"""
+  vote(replyId: ID!, type: VoteType!): Boolean!
 }
 
 interface Node {
@@ -18,29 +26,62 @@ interface Node {
   id: ID!
 }
 
+"""
+PageInfo cursor, as defined in https://facebook.github.io/relay/graphql/connections.htm#sec-undefined.PageInfo
+"""
+type PageInfo {
+  """
+  The cursor corresponding to the last nodes in edges. Null if the connection is empty.
+  """
+  endCursor: String
+
+  """
+  Used to indicate whether more edges exist following the set defined by the clients arguments.
+  """
+  hasNextPage: Boolean!
+
+  """
+  Used to indicate whether more edges exist prior to the set defined by the clients arguments.
+  """
+  hasPreviousPage: Boolean!
+
+  """
+  The cursor corresponding to the first nodes in edges. Null if the connection is empty.
+  """
+  startCursor: String
+}
+
 type Query {
   """Get the feed"""
-  feed: [Reply]!
+  feed(
+    """Returns the elements in the list that come after the specified cursor"""
+    after: String
+
+    """Returns the first n elements from the list."""
+    first: Int!
+  ): ReplyConnection
 
   """Get profile of `User` by name or ID"""
   profile(id: ID, name: String): User!
 
-  "\n                Get nested replies of a root `Link`\n                NOTE: only works for `Link`s, will fail for non-links.\n            "
-  replies: [Reply]!
+  """
+  Get nested replies of a root `Link`. NOTE: only works for `Link`s, will fail for non-links.
+  """
+  replies(rootId: ID!): [Reply]!
+
+  """Get reply by ID"""
+  reply(id: ID!): Reply!
 }
 
 type Reply implements Node {
   """Author of the `Reply`"""
-  author: User
+  author: User!
 
   """`Reply` content"""
   content: String
 
   """`Reply` creation time"""
-  createdAt: String!
-
-  """`Reply` depth level (used for rendering)"""
-  depth: Int!
+  createdAt: Date!
 
   """Has the `User` signed in voted on the post already?"""
   hasVoted: Boolean!
@@ -57,14 +98,31 @@ type Reply implements Node {
   """Root of the `Reply`"""
   root: Reply
 
-  """`Reply` title"""
+  """`Reply` title (only used in Links/Posts)"""
   title: String
 
-  """`Reply` attached URL"""
-  url: String
-
   """Number of votes on the `Reply`"""
-  votes: Int!
+  voteCount: Int!
+}
+
+type ReplyConnection {
+  """
+  https://facebook.github.io/relay/graphql/connections.htm#sec-Edge-Types
+  """
+  edges: [ReplyEdge]
+
+  """
+  https://facebook.github.io/relay/graphql/connections.htm#sec-undefined.PageInfo
+  """
+  pageInfo: PageInfo!
+}
+
+type ReplyEdge {
+  """https://facebook.github.io/relay/graphql/connections.htm#sec-Cursor"""
+  cursor: String!
+
+  """https://facebook.github.io/relay/graphql/connections.htm#sec-Node"""
+  node: Reply
 }
 
 enum ReplyType {
@@ -78,16 +136,29 @@ type User implements Node {
   about: String
 
   """`User` creation time"""
-  createdAt: String
+  createdAt: Date!
 
   """Unique identifier for the resource"""
   id: ID!
 
   """`User` name"""
-  name: String
+  name: String!
 
   """Replies by the `User`"""
-  replies(type: ReplyType!): [Reply]
+  replies(
+    """Returns the elements in the list that come after the specified cursor"""
+    after: String
+
+    """Returns the elements in the list that come before the specified cursor"""
+    before: String
+
+    """Returns the first n elements from the list."""
+    first: Int
+
+    """Returns the last n elements from the list."""
+    last: Int
+    type: ReplyType!
+  ): ReplyConnection
 }
 
 enum VoteType {

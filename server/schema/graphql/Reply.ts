@@ -1,10 +1,8 @@
 import { arg, enumType, extendType, idArg, nonNull, objectType, stringArg } from "nexus";
 import { Node } from "./Node";
 import { User } from "./User";
-import { newReplyService } from "@/domains/reply";
-import type { NexusGenObjects } from "@/generated/nexus-typegen";
-import { connectionFromArray } from "graphql-relay";
-import { serializeCursor } from "./utils";
+import { newReplyService, type ReplyOutput } from "@/domains/reply";
+import { parseCursor, serializeCursor } from "./utils";
 
 const replySvc = newReplyService()
 
@@ -21,37 +19,42 @@ export const Reply = objectType({
             type: Reply,
             description: 'Root of the `Reply`',
             resolve(parent, args, ctx, info) {
-                return replySvc.rootOfReply(parent.id)
+                return replySvc.rootOfReply({
+                    id: parent.id, signedInUser: ctx.signedInUser,
+                })
             }
         })
         t.field('parent', {
             type: Reply,
             description: 'Parent of the `Reply`',
             resolve(parent, args, ctx, info) {
-                return replySvc.parentOfReply(parent.id)
+                return replySvc.parentOfReply({
+                    id: parent.id, signedInUser: ctx.signedInUser,
+                })
             }
         })
         t.nonNull.field('author', {
             type: User,
             description: 'Author of the `Reply`',
             resolve(parent, args, ctx, info) {
-                return replySvc.authorOfReply(parent.id)
+                return replySvc.authorOfReply({
+                    id: parent.id, signedInUser: ctx.signedInUser,
+                })
             }
         })
         t.nonNull.int('voteCount', {
             description: 'Number of votes on the `Reply`',
-        })
-        t.nonNull.int('replyCount', {
-            description: 'Number of replies on the `Reply`',
+            resolve(parent, args, ctx, info) {
+                return replySvc.voteCountOfReply({
+                    id: parent.id, signedInUser: ctx.signedInUser,
+                })
+            }
         })
         t.nonNull.boolean('hasVoted', {
             description: 'Has the `User` signed in voted on the post already?'
         })
         t.string('title', {
-            description: '`Reply` title',
-        })
-        t.string('url', {
-            description: '`Reply` attached URL',
+            description: '`Reply` title (only used in Links/Posts)',
         })
         t.string('content', {
             description: '`Reply` content',
@@ -72,45 +75,29 @@ export const ReplyQuery = extendType({
             type: Reply,
             disableBackwardPagination: true,
             description: 'Get the feed',
-            async resolve(parent, args, context, info) {
-                console.log('Query.feed resolve', info.fieldNodes)
-                // const data = replySvc.feed({
-                //     first: args.first, after: args.after,
-
-                // })
-                return connectionFromArray<NexusGenObjects['Reply']>(/*data*/[{
-                    id: '0',
-                    isLink: true,
-                    createdAt: new Date(),
-                    hasVoted: false,
-                    replyCount: 0,
-                    voteCount: 0,
-                }, {
-                    id: '1',
-                    isLink: true,
-                    createdAt: new Date(),
-                    hasVoted: false,
-                    replyCount: 0,
-                    voteCount: 0,
-                }], args)
+            nodes(parent, args, ctx, info) {
+                return replySvc.feed({
+                    first: args.first,
+                    after: args.after ? parseCursor(args.after) : null,
+                    signedInUser: ctx.signedInUser,
+                })
             },
-            cursorFromNode(node, args, ctx, info, forCursor) {
-                console.log('Query.feed cursorFromNode', info.fieldNodes)
-                return node ? serializeCursor({ i: node.id, v: node.createdAt })
+            cursorFromNode(node, args, ctx, info) {
+                return node ? serializeCursor({ i: node.id, v: null })
                     : ""
             }
         })
-        t.connectionField('replies', {
+        t.nonNull.list.field('replies', {
             type: Reply,
-            disableBackwardPagination: true,
             description: 'Get nested replies of a root `Link`. NOTE: only works for `Link`s, will fail for non-links.',
-            additionalArgs: {
+            args: {
                 rootId: nonNull(idArg()),
             },
-            resolve(parent, args, context, info) {
-                // TODO: move to svc later
-                return []
-            }
+            resolve(parent, args, ctx, info) {
+                return replySvc.repliesOfRoot({
+                    id: args.rootId, signedInUser: ctx.signedInUser,
+                })
+            },
         })
         t.nonNull.field('reply', {
             type: Reply,
@@ -118,9 +105,11 @@ export const ReplyQuery = extendType({
             args: {
                 id: nonNull(idArg()),
             },
-            resolve(parent, args, context, info) {
-                // TODO: move to svc later
-                return null
+            resolve(parent, args, ctx, info) {
+                return replySvc.reply({
+                    id: args.id,
+                    signedInUser: ctx.signedInUser,
+                })
             }
         })
     },
@@ -131,16 +120,17 @@ export const ReplyMutation = extendType({
     definition(t) {
         t.nonNull.field('post', {
             type: Reply,
-            description: 'Post a `Reply` to the feed',
+            description: 'Post a `Reply` (Link) to the feed',
             args: {
-                url: nonNull(stringArg()),
                 title: nonNull(stringArg()),
                 content: stringArg(),
             },
-            resolve(parent, args, context) {
-                // TODO: move to svc later
-                const { url, title, content } = args
-                return { id: 'd', title, url, content }
+            resolve(parent, args, ctx) {
+                const { title, content } = args
+                return replySvc.makePost({
+                    signedInUser: ctx.signedInUser,
+                    title, content: content ?? null,
+                })
             }
         })
         t.nonNull.field('reply', {
@@ -150,21 +140,36 @@ export const ReplyMutation = extendType({
                 parentId: nonNull(idArg()),
                 content: nonNull(stringArg()),
             },
-            resolve(parent, args, context) {
-                // TODO: move to svc later
+            resolve(parent, args, ctx) {
                 const { parentId, content } = args
-                return { id: parentId, content }
+                return replySvc.makeReply({
+                    parentId, content, signedInUser: ctx.signedInUser,
+                })
             }
         })
-        t.nonNull.int('vote', {
-            description: 'Vote on a `Reply`, get current vote count after action.',
+        t.nonNull.boolean('vote', {
+            description: 'Vote on a `Reply`',
             args: {
                 replyId: nonNull(idArg()),
                 type: nonNull(VoteType), // idempotency
             },
-            resolve(parent, args, context, info) {
-                // TODO: move to svc later
-                return 0
+            resolve(parent, args, ctx, info) {
+                const { replyId, type } = args
+                return replySvc.voteOnReply({
+                    replyId, type, signedInUser: ctx.signedInUser,
+                })
+            }
+        })
+        t.nonNull.boolean('delete', {
+            description: 'Delete a `Reply`',
+            args: {
+                replyId: nonNull(idArg()),
+            },
+            resolve(parent, args, ctx, info) {
+                const { replyId } = args
+                return replySvc.deleteReply({
+                    replyId, signedInUser: ctx.signedInUser,
+                })
             }
         })
     },
