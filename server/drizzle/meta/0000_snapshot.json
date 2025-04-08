@@ -1,5 +1,5 @@
 {
-  "id": "14def5db-b2c0-440d-8bb8-39fa9d435a82",
+  "id": "8acf0d01-131e-48ac-9d8a-cc421eda9f20",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -38,12 +38,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "content": {
           "name": "content",
           "type": "text",
@@ -58,8 +52,7 @@
           "generated": {
             "as": "\"root_id\" IS NULL",
             "type": "stored"
-          },
-          "default": false
+          }
         },
         "is_deleted": {
           "name": "is_deleted",

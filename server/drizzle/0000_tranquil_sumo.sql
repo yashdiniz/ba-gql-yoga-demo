@@ -4,9 +4,8 @@ CREATE TABLE "ba_gql_demo_reply" (
 	"parent_id" text,
 	"author_id" text NOT NULL,
 	"title" text NOT NULL,
-	"url" text,
 	"content" text,
-	"is_link" boolean DEFAULT false GENERATED ALWAYS AS ("root_id" IS NULL) STORED NOT NULL,
+	"is_link" boolean GENERATED ALWAYS AS ("root_id" IS NULL) STORED NOT NULL,
 	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updated_at" timestamp with time zone
