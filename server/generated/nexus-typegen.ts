@@ -40,7 +40,7 @@ export interface NexusGenInputs {
 }
 
 export interface NexusGenEnums {
-  ReplyType: "ALL" | "LINKS" | "REPLIES"
+  ReplyType: "LINKS" | "LINKS_REPLIES" | "REPLIES" | "VOTED"
   VoteType: "NO" | "UP"
 }
 
@@ -102,6 +102,7 @@ export interface NexusGenFieldTypes {
     delete: boolean; // Boolean!
     post: NexusGenRootTypes['Reply']; // Reply!
     reply: NexusGenRootTypes['Reply']; // Reply!
+    setAbout: NexusGenRootTypes['User']; // User!
     vote: boolean; // Boolean!
   }
   PageInfo: { // field return type
@@ -153,6 +154,7 @@ export interface NexusGenFieldTypeNames {
     delete: 'Boolean'
     post: 'Reply'
     reply: 'Reply'
+    setAbout: 'User'
     vote: 'Boolean'
   }
   PageInfo: { // field return type name
@@ -211,6 +213,9 @@ export interface NexusGenArgTypes {
     reply: { // args
       content: string; // String!
       parentId: string; // ID!
+    }
+    setAbout: { // args
+      about?: string | null; // String
     }
     vote: { // args
       replyId: string; // ID!

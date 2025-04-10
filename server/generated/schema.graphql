@@ -16,6 +16,7 @@ type Mutation {
 
   """`Reply` to another reply (nested comment support)"""
   reply(content: String!, parentId: ID!): Reply!
+  setAbout(about: String): User!
 
   """Vote on a `Reply`"""
   vote(replyId: ID!, type: VoteType!): Boolean!
@@ -126,9 +127,10 @@ type ReplyEdge {
 }
 
 enum ReplyType {
-  ALL
   LINKS
+  LINKS_REPLIES
   REPLIES
+  VOTED
 }
 
 type User implements Node {
