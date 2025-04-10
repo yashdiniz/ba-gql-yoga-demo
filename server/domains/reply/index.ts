@@ -1,19 +1,9 @@
-import type { User } from "../user";
 import { db } from "@/db";
 import { replies, votes } from "@/db/schema";
 import { and, count, eq } from "drizzle-orm";
+import type { Reply, User } from "../shared";
 
-export type ReplyOutput = {
-    id: string;
-    isLink: boolean;
-    createdAt: Date;
-    rootId: string | null;
-    parentId: string | null;
-    authorId: string;
-    hasVoted: boolean;
-    title: string;
-    content: string | null;
-}
+export type ReplyOutput = Reply
 
 type Cursor<CursorType> = {
     i: string;
@@ -97,6 +87,9 @@ class ReplySvc implements ReplyService {
             return {
                 ...replyResult.root,
                 hasVoted: replyResult.root.votes?.length > 0,
+                // NOTE: if the reply is deleted, return `title` and `content` as deleted.
+                title: replyResult.root.isDeleted ? '[deleted]' : replyResult.root.title,
+                content: replyResult.root.isDeleted ? '[deleted]' : replyResult.root.content,
             }
         else return null
     }
@@ -124,6 +117,9 @@ class ReplySvc implements ReplyService {
             return {
                 ...replyResult.parent,
                 hasVoted: replyResult.parent.votes?.length > 0,
+                // NOTE: if the reply is deleted, return `title` and `content` as deleted.
+                title: replyResult.parent.isDeleted ? '[deleted]' : replyResult.parent.title,
+                content: replyResult.parent.isDeleted ? '[deleted]' : replyResult.parent.content,
             }
         else return null
     }
@@ -146,6 +142,9 @@ class ReplySvc implements ReplyService {
             return {
                 ...replyResult,
                 hasVoted: replyResult.votes?.length > 0,
+                // NOTE: if the reply is deleted, return `title` and `content` as deleted.
+                title: replyResult.isDeleted ? '[deleted]' : replyResult.title,
+                content: replyResult.isDeleted ? '[deleted]' : replyResult.content,
             }
         else throw 'reply not found'
     }
@@ -153,14 +152,17 @@ class ReplySvc implements ReplyService {
     async feed(input: FeedQueryInput) {
         const { first, after, signedInUser } = input
         const results = await db.query.replies.findMany({
-            where: eq(replies.isLink, true),
+            where: and(
+                eq(replies.isDeleted, false), // do not return deleted root replies (Links)
+                eq(replies.isLink, true),
+            ),
             with: {
                 votes: {
                     where: eq(votes.userId, signedInUser.id)
                 }
             },
             limit: first,
-            offset: after?.v, // TODO: fixed the pagination here
+            offset: after?.v, // TODO: fix the pagination here
         }).execute().catch(e => {
             console.error('ReplySvc.feed', e)
             throw e
@@ -180,8 +182,12 @@ class ReplySvc implements ReplyService {
 
     async repliesOfRoot(input: ReplyQueryInput) {
         const { id, signedInUser } = input
+        // NOTE: due to nested structure of replies, ALLOW replies of posts EVEN IF DELETED
+        // do not want the frontend to panic because of missing reply nodes when building tree
         const results = await db.query.replies.findMany({
-            where: eq(replies.rootId, id),
+            where: and(
+                eq(replies.rootId, id),
+            ),
             with: {
                 votes: {
                     where: eq(votes.userId, signedInUser.id)
@@ -194,6 +200,9 @@ class ReplySvc implements ReplyService {
 
         const res = results.map(p => ({
             ...p,
+            // NOTE: if the reply is deleted, return `title` and `content` as deleted.
+            title: p.isDeleted ? '[deleted]' : p.title,
+            content: p.isDeleted ? '[deleted]' : p.content,
             hasVoted: p.votes.length > 0,
         }))
 
@@ -205,7 +214,9 @@ class ReplySvc implements ReplyService {
     async authorOfReply(input: ReplyQueryInput) {
         const { id } = input
         const result = await db.query.replies.findFirst({
-            where: eq(replies.id, id),
+            where: and(
+                eq(replies.id, id),
+            ),
             with: {
                 author: true,
             }
@@ -215,12 +226,19 @@ class ReplySvc implements ReplyService {
         })
 
         if (result)
-            return result.author
+            return result.isDeleted ? {
+                ...result.author,
+                id: '0',
+                name: '[deleted]',
+                about: null,
+                createdAt: new Date(), updatedAt: null,
+            } : result.author
         else throw 'could not fetch author'
     }
 
     async voteCountOfReply(input: ReplyQueryInput) {
         const { id } = input
+        // TODO: return 0 on posts with isDeleted true 
         const result = await db.select({
             voteCount: count(votes.userId),
         }).
@@ -288,6 +306,8 @@ class ReplySvc implements ReplyService {
 
     async voteOnReply(input: VoteMutationInput) {
         const { replyId, signedInUser, type } = input
+
+        // TODO: prevent votes on replies with isDeleted flag true
 
         const vote = await db.query.votes.findFirst({
             where: and(
