@@ -62,6 +62,7 @@ export const repliesRelations = relations(replies, ({ one, many }) => ({
         references: [replies.id],
     }),
     author: one(users, {
+        relationName: 'author',
         fields: [replies.authorId],
         references: [users.id],
     }),
