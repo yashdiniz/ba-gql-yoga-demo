@@ -1,4 +1,4 @@
-import { boolean, integer, primaryKey, text, uniqueIndex } from "drizzle-orm/pg-core";
+import { integer, primaryKey, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createTable, idMixin, createdAtMixin, updatedAtMixin } from "./utils";
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 
@@ -40,10 +40,10 @@ export const replies = createTable(
         title: text('title').
             notNull(),
         content: text('content'),
-        isLink: boolean('is_link').
+        isLink: integer('is_link', { mode: 'boolean', }).
             notNull().
             generatedAlwaysAs(sql`"root_id" IS NULL`),
-        isDeleted: boolean('is_deleted').
+        isDeleted: integer('is_deleted', { mode: 'boolean', }).
             notNull().
             default(false),
         ...createdAtMixin, ...updatedAtMixin,

@@ -17,6 +17,7 @@ node_modules/
 
 # database files
 db/pgdata/
+store.db
 
 # logs
 logs/

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTableCreator, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, sqliteTableCreator, text } from "drizzle-orm/sqlite-core";
 import { nanoid } from "nanoid";
 
 /**
@@ -8,16 +8,16 @@ import { nanoid } from "nanoid";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `ba_gql_demo_${name}`);
+export const createTable = sqliteTableCreator((name) => `ba_gql_demo_${name}`);
 
 export const createdAtMixin = {
-  createdAt: timestamp('created_at', { withTimezone: true }).
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).
     default(sql`CURRENT_TIMESTAMP`).
     notNull(),
 }
 
 export const updatedAtMixin = {
-  updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).$onUpdate(() => sql`CURRENT_TIMESTAMP`),
 }
 
 export const idMixin = (prefix: string) => ({
