@@ -1,5 +1,5 @@
 import { newUserService } from '@/domains/user';
-import { getServerAuthSession, type DError, type User } from '../domains/shared'
+import { getServerAuthSession, type User } from '../domains/shared'
 import { Hono } from "hono";
 import { HTTPException } from 'hono/http-exception'
 
@@ -31,12 +31,6 @@ userRouter.get('/:name', async c => {
         throw new HTTPException(e.statusCode, { message: e.message })
     }
 })
-
-// get replies for user profile
-// userRouter.get('/replies', async c => {
-//     const { userid, type } = c.req.param()
-
-// })
 
 // check if user exists
 userRouter.get('/exists/:name', async c => {
@@ -84,6 +78,32 @@ userRouter.use(async (c, next) => {
     else throw new HTTPException(401, { message: d.message })
 
     return await next()
+})
+
+// get replies for user profile
+userRouter.get('/replies', async c => {
+    const signedInUser = c.get('signedInUser')
+    //@ts-ignore
+    const { first, after, userid, type }: {
+        first?: number;
+        after?: string;
+        userid: string;
+        type: 'LINKS_REPLIES' | 'LINKS' | 'REPLIES' | 'VOTED';
+    } = c.req.param()
+    try {
+        return c.json(await userSvc.getUserReplies({
+            first: first ?? 20,
+            after: after ? {
+                // TODO: parseInt could return NaN
+                i: after, v: new Date(parseInt(after)).getTime(),
+            } : null,
+            userId: userid,
+            replyType: type,
+            signedInUser,
+        }))
+    } catch (e: any) {
+        throw new HTTPException(e.statusCode, { message: e.message })
+    }
 })
 
 // set password
