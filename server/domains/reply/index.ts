@@ -342,7 +342,7 @@ class ReplySvc implements ReplyService {
     async deleteReply(input: DeleteReplyMutationInput) {
         const { replyId, signedInUser } = input
 
-        await db.update(replies).
+        const res = await db.update(replies).
             set({
                 isDeleted: true,
             }).
@@ -350,11 +350,12 @@ class ReplySvc implements ReplyService {
                 eq(replies.id, replyId),
                 eq(replies.authorId, signedInUser.id), // prevent deleting reply if not made by user
             )).
+            returning().
             execute().catch(e => {
                 console.error('ReplySvc.deleteReply', e)
                 throw derror(500, e)
             })
 
-        return true
+        return res[0].authorId == signedInUser.id
     }
 }
