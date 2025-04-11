@@ -12,12 +12,12 @@ export const createTable = sqliteTableCreator((name) => `ba_gql_demo_${name}`);
 
 export const createdAtMixin = {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).
-    default(sql`CURRENT_TIMESTAMP`).
+    default(new Date()).
     notNull(),
 }
 
 export const updatedAtMixin = {
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).$onUpdate(() => new Date()),
 }
 
 export const idMixin = (prefix: string) => ({
