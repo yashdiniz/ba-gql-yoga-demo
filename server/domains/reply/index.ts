@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { replies, votes } from "@/db/schema";
-import { and, count, eq, gt } from "drizzle-orm";
+import { and, count, desc, eq, lt } from "drizzle-orm";
 import { derror, type Cursor, type Reply, type User } from "../shared";
 
 export type ReplyOutput = Reply
@@ -150,7 +150,7 @@ class ReplySvc implements ReplyService {
             where: and(
                 eq(replies.isDeleted, false), // do not return deleted root replies (Links)
                 eq(replies.isLink, true),
-                after ? gt(replies.id, after.i) : undefined, // PAGINATION
+                after ? lt(replies.id, after.i) : undefined, // PAGINATION
             ),
             with: {
                 votes: {
@@ -158,6 +158,7 @@ class ReplySvc implements ReplyService {
                 }
             },
             limit: first,
+            orderBy: desc(replies.id), // PAGINATION
         }).execute().catch(e => {
             console.error('ReplySvc.feed', e)
             throw derror(500, e)

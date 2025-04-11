@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { replies, users, votes } from "@/db/schema";
-import { and, DrizzleError, eq } from "drizzle-orm";
+import { and, desc, DrizzleError, eq, lt } from "drizzle-orm";
 import { derror, jwtSign, saltAndHashPassword, verifyHashes, type Cursor, type Reply, type User } from "../shared";
 
 export type UserOutput = User
@@ -109,6 +109,7 @@ class UserSvc implements UserService {
                 where: and(
                     eq(replies.authorId, userId),
                     replyTypeQuery,
+                    after ? lt(replies.id, after.i) : undefined, // PAGINATION
                 ),
                 with: {
                     votes: {
@@ -116,7 +117,7 @@ class UserSvc implements UserService {
                     }
                 },
                 limit: first,
-                offset: after?.v,
+                orderBy: desc(replies.id), // PAGINATION
             }).execute().catch(e => {
                 console.error('UserSvc.getUserReplies', e)
                 throw derror(500, e)
@@ -128,7 +129,10 @@ class UserSvc implements UserService {
             return result
         } else {
             res = await db.query.votes.findMany({
-                where: eq(votes.userId, userId),
+                where: and(
+                    eq(votes.userId, userId),
+                    after ? lt(votes.createdAt, new Date(after.v)) : undefined, // PAGINATION
+                ),
                 with: {
                     reply: {
                         with: {
@@ -139,7 +143,7 @@ class UserSvc implements UserService {
                     },
                 },
                 limit: first,
-                offset: after?.v
+                orderBy: desc(votes.createdAt), // PAGINATION
             }).execute().catch(e => {
                 console.error('UserSvc.getUserReplies', e)
                 throw derror(500, e)
