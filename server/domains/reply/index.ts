@@ -1,14 +1,9 @@
 import { db } from "@/db";
 import { replies, votes } from "@/db/schema";
-import { and, count, eq } from "drizzle-orm";
-import type { Reply, User } from "../shared";
+import { and, count, eq, gt } from "drizzle-orm";
+import { derror, type Cursor, type Reply, type User } from "../shared";
 
 export type ReplyOutput = Reply
-
-type Cursor<CursorType> = {
-    i: string;
-    v: CursorType;
-}
 
 export interface ReplyService {
     feed(input: FeedQueryInput): Promise<ReplyOutput[]>;
@@ -80,7 +75,7 @@ class ReplySvc implements ReplyService {
             }
         }).execute().catch(e => {
             console.error('ReplySvc.rootOfReply', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (replyResult && replyResult.root)
@@ -110,7 +105,7 @@ class ReplySvc implements ReplyService {
             }
         }).execute().catch(e => {
             console.error('ReplySvc.parentOfReply', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (replyResult && replyResult.parent)
@@ -135,7 +130,7 @@ class ReplySvc implements ReplyService {
             }
         }).execute().catch(e => {
             console.error('ReplySvc.reply', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (replyResult)
@@ -146,7 +141,7 @@ class ReplySvc implements ReplyService {
                 title: replyResult.isDeleted ? '[deleted]' : replyResult.title,
                 content: replyResult.isDeleted ? '[deleted]' : replyResult.content,
             }
-        else throw 'reply not found'
+        else throw derror(404, 'reply not found')
     }
 
     async feed(input: FeedQueryInput) {
@@ -155,6 +150,7 @@ class ReplySvc implements ReplyService {
             where: and(
                 eq(replies.isDeleted, false), // do not return deleted root replies (Links)
                 eq(replies.isLink, true),
+                after ? gt(replies.id, after.i) : undefined, // PAGINATION
             ),
             with: {
                 votes: {
@@ -162,10 +158,9 @@ class ReplySvc implements ReplyService {
                 }
             },
             limit: first,
-            offset: after?.v, // TODO: fix the pagination here
         }).execute().catch(e => {
             console.error('ReplySvc.feed', e)
-            throw e
+            throw derror(500, e)
         })
         if (results.length === 0) {
             console.error('ReplySvc.feed:', '0 items in results')
@@ -195,7 +190,7 @@ class ReplySvc implements ReplyService {
             }
         }).execute().catch(e => {
             console.error('ReplySvc.repliesOfRoot', e)
-            throw e
+            throw derror(500, e)
         })
 
         const res = results.map(p => ({
@@ -222,7 +217,7 @@ class ReplySvc implements ReplyService {
             }
         }).execute().catch(e => {
             console.error('ReplySvc.authorOfReply', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (result)
@@ -233,7 +228,7 @@ class ReplySvc implements ReplyService {
                 about: null,
                 createdAt: new Date(), updatedAt: null,
             } : result.author
-        else throw 'could not fetch author'
+        else throw derror(404, 'could not fetch author')
     }
 
     async voteCountOfReply(input: ReplyQueryInput) {
@@ -248,7 +243,7 @@ class ReplySvc implements ReplyService {
             limit(1).
             execute().catch(e => {
                 console.error('ReplySvc.voteCountOfReply', e)
-                throw e
+                throw derror(500, e)
             })
 
         return result[0].voteCount
@@ -264,7 +259,7 @@ class ReplySvc implements ReplyService {
             returning().
             execute().catch(e => {
                 console.error('ReplySvc.makePost', e)
-                throw e
+                throw derror(500, e)
             })
 
         return {
@@ -280,22 +275,22 @@ class ReplySvc implements ReplyService {
             where: eq(replies.id, parentId)
         }).execute().catch(e => {
             console.error('ReplySvc.makeReply', e)
-            throw e
+            throw derror(500, e)
         })
         if (!parentReply) {
-            throw 'parent reply not found'
+            throw derror(404, 'parent reply not found')
         }
 
         const res = await db.insert(replies).values({
             authorId: signedInUser.id,
             title: content,
             parentId: parentReply.id,
-            rootId: parentReply.rootId,
+            rootId: parentReply.rootId ?? parentReply.id,
         }).
             returning().
             execute().catch(e => {
                 console.error('ReplySvc.makePost', e)
-                throw e
+                throw derror(500, e)
             })
 
         return {
@@ -316,7 +311,7 @@ class ReplySvc implements ReplyService {
             )
         }).execute().catch(e => {
             console.error('ReplySvc.voteOnReply', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (type === 'NO' && vote) {
@@ -328,7 +323,7 @@ class ReplySvc implements ReplyService {
                     )
                 ).execute().catch(e => {
                     console.error('ReplySvc.voteOnReply', e)
-                    throw e
+                    throw derror(500, e)
                 })
         } else if (type === 'UP' && !vote) {
             await db.insert(votes).
@@ -336,7 +331,7 @@ class ReplySvc implements ReplyService {
                     replyId, userId: signedInUser.id,
                 }).execute().catch(e => {
                     console.error('ReplySvc.voteOnReply', e)
-                    throw e
+                    throw derror(500, e)
                 })
         } else return false
 
@@ -356,7 +351,7 @@ class ReplySvc implements ReplyService {
             )).
             execute().catch(e => {
                 console.error('ReplySvc.deleteReply', e)
-                throw e
+                throw derror(500, e)
             })
 
         return true
