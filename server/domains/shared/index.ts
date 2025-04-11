@@ -1,3 +1,13 @@
+import 'dotenv/config'
+import { z } from 'zod'
+import jwt from 'jsonwebtoken'
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { hash, compare } from 'bcryptjs'
+import { eq } from 'drizzle-orm';
+
+const { sign, verify, TokenExpiredError } = jwt
+
 export type Reply = {
     id: string;
     isLink: boolean;
@@ -17,10 +27,31 @@ export type User = {
     createdAt: Date;
 }
 
-import { db } from '@/db';
-import { users } from '@/db/schema';
-import { hash, compare } from 'bcryptjs'
-import { eq } from 'drizzle-orm';
+export type DError = {
+    statusCode: number;
+    name?: string;
+    message: string;
+    cause?: unknown;
+}
+
+export function derror(statusCode: number, e: string | Error): DError {
+    if (typeof e === 'string') {
+        return {
+            statusCode,
+            message: e,
+        }
+    }
+    return {
+        statusCode,
+        message: e.message, name: e.name,
+        cause: e.cause,
+    }
+}
+
+export type Cursor<CursorType> = {
+    i: string;
+    v: CursorType;
+}
 
 /**
  * Generates a hash & salt from plaintext `password`.
@@ -38,15 +69,81 @@ export async function verifyHashes(hashed: string, password: string) {
     return await compare(password, hashed)
 }
 
-export async function getServerAuthSession(token: string):
+/**
+ * Custom Server auth function to get session details
+ * */
+export async function getServerAuthSession(req: Request):
     Promise<{ success: false; message: string } | { success: true; user: User; }> {
+    // split the authorization header by space delim to get the jwt
+    const authHeader = req.headers.get("authorization")
+    if (!authHeader) {
+        return { success: false, message: "invalid authorization token" }
+    }
+    const a = authHeader.split(" ")
+    const token = a[0] && a[0].toLowerCase() == "bearer" ? a[1] : a[0]
+    if (!token) {
+        return { success: false, message: "invalid authorization token" }
+    }
 
-    // TODO: token is just the user ID right now, make sure that it's an actual JWT later.
-    const user = await db.query.users.findFirst({
-        where: eq(users.id, token),
+    return getServerAuthSessionFromToken(token)
+}
+
+/**
+ * Wrapper for JWT sign with payload type checking
+ * */
+export function jwtSign(payload: string) {
+    return sign({ id: payload }, process.env.JWT_KEY!, {
+        algorithm: "HS256",
+        issuer: process.env.JWT_ISSUER,
+        audience: process.env.JWT_AUDIENCE,
+        subject: payload,
+        expiresIn: "1h",
     })
+}
 
-    if (!user)
-        return { success: false, message: 'user not found' }
-    else return { success: true, user }
+/**
+ * Wrapper for JWT verify
+ * */
+export function jwtVerify(token: string) {
+    try {
+        return verify(token, process.env.JWT_KEY!, {
+            algorithms: ["HS256"],
+            issuer: process.env.JWT_ISSUER,
+            audience: process.env.JWT_AUDIENCE,
+        })
+    } catch (e) {
+        if (e instanceof TokenExpiredError) {
+            return { success: false, message: "token expired" }
+        } else {
+            return { success: false, message: "invalid token" }
+        }
+    }
+}
+
+const Payload = z.object({
+    id: z.string(),
+    sub: z.string(),
+})
+
+/**
+ * Custom Server auth function to get session details
+ * specialCase: if true, will return the user profile info even if the user is disabled
+ * */
+export async function getServerAuthSessionFromToken(token: string):
+    Promise<{ success: false; message: string } | { success: true; user: User }> {
+    // verify the JWT and parse it into the valid format
+    const payload = Payload.safeParse(jwtVerify(token))
+    if (!payload.success) {
+        return { success: false, message: "invalid authorization token or expired" }
+    }
+
+    // find the user and profile info for that token
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, payload.data.sub),
+    }).execute()
+    if (!user || user.password === "") { // password is "" if the user is anonymised after deleting their account
+        return { success: false, message: "user not found" }
+    }
+
+    return { success: true, user }
 }
