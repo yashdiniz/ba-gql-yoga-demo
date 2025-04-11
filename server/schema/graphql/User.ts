@@ -1,7 +1,7 @@
 import { enumType, nonNull, objectType, extendType, idArg, stringArg, scalarType } from "nexus";
 import { Reply } from "./Reply";
 import { Node } from "./Node";
-import { serializeCursor } from "./utils";
+import { parseCursor, serializeCursor } from "./utils";
 import { newUserService } from "@/domains/user";
 
 const userSvc = newUserService();
@@ -20,10 +20,15 @@ export const User = objectType({
             description: 'Replies by the `User`',
             additionalArgs: {
                 type: nonNull(ReplyType),
+                userId: nonNull(idArg()),
             },
-            resolve(root, args, ctx, info) {
-                // TODO: move to svc later
-                return null
+            nodes(root, args, ctx, info) {
+                const { first, after, type, userId } = args
+                return userSvc.getUserReplies({
+                    first: first ?? 10,
+                    after: after ? parseCursor(after) : null,
+                    replyType: type, userId, signedInUser: ctx.signedInUser,
+                })
             },
             cursorFromNode(node, args, ctx, info, forCursor) {
                 console.log('Query.replies cursorFromNode', info.fieldNodes)

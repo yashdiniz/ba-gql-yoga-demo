@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { saltAndHashPassword, verifyHashes, type User } from "../shared";
+import { replies, users, votes } from "@/db/schema";
+import { and, DrizzleError, eq } from "drizzle-orm";
+import { derror, jwtSign, saltAndHashPassword, verifyHashes, type Cursor, type Reply, type User } from "../shared";
 
 export type UserOutput = User
 
@@ -19,7 +19,13 @@ type LoginOutput = {
     user: User;
     token: string;
 }
-
+type UserRepliesQueryInput = {
+    first: number;
+    after: Cursor<number> | null;
+    userId: string;
+    signedInUser: User;
+    replyType: 'LINKS_REPLIES' | 'LINKS' | 'REPLIES' | 'VOTED';
+}
 type CreateUserMutationInput = {
     name: string;
     password: string;
@@ -37,6 +43,7 @@ type SetPasswordMutationInput = {
 export interface UserService {
     getUserById(input: UserByIdQueryInput): Promise<UserOutput>;
     getUserByName(input: UserByNameQueryInput): Promise<UserOutput>;
+    getUserReplies(input: UserRepliesQueryInput): Promise<Reply[]>;
     userExists(input: UserByNameQueryInput): Promise<boolean>;
     login(input: LoginInput): Promise<LoginOutput>;
 
@@ -56,12 +63,15 @@ class UserSvc implements UserService {
             where: eq(users.id, id),
         }).execute().catch(e => {
             console.error('UserSvc.getUserById', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (user)
-            return user
-        else throw 'user not found'
+            return {
+                ...user,
+                password: undefined,
+            }
+        else throw derror(404, 'user not found')
     }
 
     async getUserByName(input: UserByNameQueryInput) {
@@ -70,12 +80,76 @@ class UserSvc implements UserService {
             where: eq(users.name, name),
         }).execute().catch(e => {
             console.error('UserSvc.getUserByName', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (user)
-            return user
-        else throw 'user not found'
+            return {
+                ...user,
+                password: undefined,
+            }
+        else throw derror(404, 'user not found')
+    }
+
+    async getUserReplies(input: UserRepliesQueryInput) {
+        const { first, after, userId, signedInUser, replyType } = input
+
+        let res;
+        if (replyType !== 'VOTED') {
+            let replyTypeQuery;
+            switch (replyType) {
+                case 'LINKS_REPLIES':
+                    replyTypeQuery = undefined
+                    break
+                default:
+                    replyTypeQuery = eq(replies.isLink, replyType === 'LINKS')
+
+            }
+            res = await db.query.replies.findMany({
+                where: and(
+                    eq(replies.authorId, userId),
+                    replyTypeQuery,
+                ),
+                with: {
+                    votes: {
+                        where: eq(votes.userId, signedInUser.id)
+                    }
+                },
+                limit: first,
+                offset: after?.v,
+            }).execute().catch(e => {
+                console.error('UserSvc.getUserReplies', e)
+                throw derror(500, e)
+            })
+            const result = res.map(reply => ({
+                ...reply,
+                hasVoted: reply.votes.length > 0,
+            }))
+            return result
+        } else {
+            res = await db.query.votes.findMany({
+                where: eq(votes.userId, userId),
+                with: {
+                    reply: {
+                        with: {
+                            votes: {
+                                where: eq(votes.userId, signedInUser.id),
+                            }
+                        }
+                    },
+                },
+                limit: first,
+                offset: after?.v
+            }).execute().catch(e => {
+                console.error('UserSvc.getUserReplies', e)
+                throw derror(500, e)
+            })
+            const result = res.map(({ reply }) => ({
+                ...reply,
+                hasVoted: reply.votes.length > 0,
+            }))
+            return result
+        }
     }
 
     async userExists(input: UserByNameQueryInput) {
@@ -85,7 +159,7 @@ class UserSvc implements UserService {
             where: eq(users.name, name),
         }).execute().catch(e => {
             console.error('UserSvc.userExists', e)
-            throw e
+            throw derror(500, e)
         })
 
         return !!user
@@ -97,15 +171,18 @@ class UserSvc implements UserService {
             where: eq(users.name, name),
         }).execute().catch(e => {
             console.error('UserSvc.login', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (user && await verifyHashes(user.password, password)) {
             return {
-                user,
-                token: user.id,
+                user: {
+                    ...user,
+                    password: undefined, // mask password
+                },
+                token: jwtSign(user.id),
             }
-        } else throw 'password incorrect or user does not exist'
+        } else throw derror(401, 'password incorrect or user does not exist')
     }
 
     async setPassword(input: SetPasswordMutationInput) {
@@ -115,7 +192,7 @@ class UserSvc implements UserService {
             where: eq(users.id, signedInUser.id),
         }).execute().catch(e => {
             console.error('UserSvc.setPassword', e)
-            throw e
+            throw derror(500, e)
         })
 
         if (user && await verifyHashes(user.password, oldPassword)) {
@@ -125,9 +202,9 @@ class UserSvc implements UserService {
                 where(eq(users.id, user.id)).
                 execute().catch(e => {
                     console.error('UserSvc.setPassword', e)
-                    throw e
+                    throw derror(500, e)
                 })
-        } else throw 'old password incorrect or user does not exist'
+        } else throw derror(401, 'old password incorrect or user does not exist')
     }
 
     async setAbout(input: SetAboutMutationInput) {
@@ -137,11 +214,14 @@ class UserSvc implements UserService {
             where(eq(users.id, signedInUser.id)).
             returning().
             execute().catch(e => {
-                console.error('UserSvc.setPassword', e)
-                throw e
+                console.error('UserSvc.setAbout', e)
+                throw derror(500, e)
             })
 
-        return user[0]
+        return {
+            ...user[0],
+            password: undefined, // mask password
+        }
     }
 
     async createUser(input: CreateUserMutationInput) {
@@ -152,11 +232,17 @@ class UserSvc implements UserService {
             password: await saltAndHashPassword(password),
         }).
             returning().
-            execute().catch(e => {
+            execute().catch((e: DrizzleError) => {
                 console.error('UserSvc.createUser', e)
-                throw e
+                //@ts-ignore
+                if (e.code == 'SQLITE_CONSTRAINT_UNIQUE')
+                    throw derror(403, 'user already exists')
+                throw derror(500, e)
             })
 
-        return user[0]
+        return {
+            ...user[0],
+            password: undefined, // mask password
+        }
     }
 }

@@ -245,6 +245,7 @@ export interface NexusGenArgTypes {
       first?: number | null; // Int
       last?: number | null; // Int
       type: NexusGenEnums['ReplyType']; // ReplyType!
+      userId: string; // ID!
     }
   }
 }

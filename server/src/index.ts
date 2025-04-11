@@ -4,6 +4,7 @@ import { createYoga } from 'graphql-yoga'
 import { schema } from '@/schema/index.js'
 import { getServerAuthSession, type User } from '@/domains/shared'
 import { userRouter } from './user'
+import { HTTPException } from 'hono/http-exception'
 
 type Variables = {
   signedInUser: User;
@@ -23,26 +24,21 @@ app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
+app.route('/user', userRouter)
+
 app.use(async (c, next) => {
-  // TODO: implement jwt authorization
-  // current workaround is adding user id to request header
-  const userId = c.req.header('Authorization')
-  const guest: User = {
-    id: '0',
-    name: 'guest',
-    createdAt: new Date(),
-    about: null,
-  }
+  // const guest: User = {
+  //   id: '0',
+  //   name: 'guest',
+  //   createdAt: new Date(),
+  //   about: null,
+  // }
 
-  let signedInUser = guest;
-  if (userId) {
-    const d = await getServerAuthSession(userId)
-    if (d.success) signedInUser = d.user
-    else throw d.message
-  }
+  const d = await getServerAuthSession(c.req.raw)
+  if (d.success) c.set('signedInUser', d.user)
+  else throw new HTTPException(401, { message: d.message })
 
-  c.set('signedInUser', signedInUser)
-  await next()
+  return await next()
 })
 
 app.use('/gql', async (c) => {
@@ -52,7 +48,6 @@ app.use('/gql', async (c) => {
   })
 })
 
-app.route('/user', userRouter)
 
 serve({
   fetch: app.fetch,
