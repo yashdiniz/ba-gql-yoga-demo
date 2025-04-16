@@ -13,7 +13,7 @@ export const userRouter = new Hono<{
 const userSvc = newUserService();
 
 // get user by id
-userRouter.get('/:id', async c => {
+userRouter.get('/i/:id', async c => {
     const { id } = c.req.param()
     try {
         return c.json(await userSvc.getUserById({ id }))
@@ -23,7 +23,7 @@ userRouter.get('/:id', async c => {
 })
 
 // get user by name
-userRouter.get('/:name', async c => {
+userRouter.get('/n/:name', async c => {
     const { name } = c.req.param()
     try {
         return c.json(await userSvc.getUserByName({ name }))

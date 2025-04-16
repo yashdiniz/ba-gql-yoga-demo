@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { replies, users, votes } from "@/db/schema";
 import { and, desc, DrizzleError, eq, lt } from "drizzle-orm";
-import { derror, jwtSign, saltAndHashPassword, verifyHashes, type Cursor, type Reply, type User } from "../shared";
+import { derror, jwtSign, saltAndHashPassword, USERNAME_REGEX, verifyHashes, type Cursor, type Reply, type User } from "../shared";
 
 export type UserOutput = User
 
@@ -231,6 +231,10 @@ class UserSvc implements UserService {
     async createUser(input: CreateUserMutationInput) {
         const { name, password } = input
 
+        if (!name.match(USERNAME_REGEX)) {
+            throw derror(403, 'username must be alphanumeric lower case')
+        }
+
         const user = await db.insert(users).values({
             name,
             password: await saltAndHashPassword(password),
@@ -247,6 +251,7 @@ class UserSvc implements UserService {
         return {
             ...user[0],
             password: undefined, // mask password
+            token: jwtSign(user[0].id),
         }
     }
 }

@@ -8,6 +8,8 @@ import { eq } from 'drizzle-orm';
 
 const { sign, verify, TokenExpiredError } = jwt
 
+export const USERNAME_REGEX = /^[0-9a-z_][0-9a-z_.]{1,16}$/
+
 export type Reply = {
     id: string;
     isLink: boolean;
