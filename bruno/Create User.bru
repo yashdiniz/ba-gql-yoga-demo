@@ -1,0 +1,23 @@
+meta {
+  name: Create User
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://{{host}}/user/create
+  body: formUrlEncoded
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "yd",
+    "password": "helloworld"
+  }
+}
+
+body:form-urlencoded {
+  name: y5d
+  password: helloworld
+}
