@@ -16,7 +16,8 @@ type LoginInput = {
     password: string;
 }
 type LoginOutput = {
-    user: User;
+    id: User['id'];
+    name: User['name'];
     token: string;
 }
 type UserRepliesQueryInput = {
@@ -49,7 +50,7 @@ export interface UserService {
 
     setPassword(input: SetPasswordMutationInput): Promise<void>;
     setAbout(input: SetAboutMutationInput): Promise<UserOutput>;
-    createUser(input: CreateUserMutationInput): Promise<UserOutput>;
+    createUser(input: CreateUserMutationInput): Promise<LoginOutput>;
 }
 
 export function newUserService(): UserService {
@@ -180,10 +181,7 @@ class UserSvc implements UserService {
 
         if (user && await verifyHashes(user.password, password)) {
             return {
-                user: {
-                    ...user,
-                    password: undefined, // mask password
-                },
+                id: user.id, name: user.name,
                 token: jwtSign(user.id),
             }
         } else throw derror(401, 'password incorrect or user does not exist')
@@ -249,8 +247,8 @@ class UserSvc implements UserService {
             })
 
         return {
-            ...user[0],
-            password: undefined, // mask password
+            id: user[0].id,
+            name: user[0].name,
             token: jwtSign(user[0].id),
         }
     }
