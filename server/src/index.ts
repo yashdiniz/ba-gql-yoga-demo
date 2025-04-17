@@ -5,6 +5,8 @@ import { schema } from '@/schema/index.js'
 import { getServerAuthSession, type User } from '@/domains/shared'
 import { userRouter } from './user'
 import { HTTPException } from 'hono/http-exception'
+import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
 
 type Variables = {
   signedInUser: User;
@@ -19,6 +21,12 @@ const yoga = createYoga({
   graphqlEndpoint: '/gql',
   landingPage: false,
 })
+
+app.use(logger())
+app.use('*', cors({
+  origin: ['http://localhost:3000'], // TODO: CHANGE THIS ACCORDINGLY
+  credentials: true,
+}))
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')
