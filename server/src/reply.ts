@@ -128,7 +128,7 @@ replyRouter.get('/voteCount/:id', async c => {
 // make post
 replyRouter.post('/publish', async c => {
     const signedInUser = c.get('signedInUser')
-    const { title, content } = await c.req.parseBody<{
+    const { title, content } = await c.req.json<{
         title: string; content?: string;
     }>()
     try {
@@ -144,7 +144,7 @@ replyRouter.post('/publish', async c => {
 // make reply
 replyRouter.post('/', async c => {
     const signedInUser = c.get('signedInUser')
-    const { parentid, content } = await c.req.parseBody<{
+    const { parentid, content } = await c.req.json<{
         parentid: string; content: string;
     }>()
     try {
@@ -173,7 +173,7 @@ replyRouter.delete('/:id', async c => {
 // vote on reply
 replyRouter.put('/vote', async c => {
     const signedInUser = c.get('signedInUser')
-    const { id, type } = await c.req.parseBody<{
+    const { id, type } = await c.req.json<{
         id: string; type: 'UP' | 'NO';
     }>()
     try {

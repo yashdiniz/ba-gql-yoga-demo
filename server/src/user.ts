@@ -44,7 +44,7 @@ userRouter.get('/exists/:name', async c => {
 
 // login user
 userRouter.post('/login', async c => {
-    const { name, password } = await c.req.parseBody<{
+    const { name, password } = await c.req.json<{
         name: string; password: string;
     }>()
     try {
@@ -55,7 +55,7 @@ userRouter.post('/login', async c => {
 })
 
 userRouter.post('/create', async c => {
-    const { name, password } = await c.req.parseBody<{
+    const { name, password } = await c.req.json<{
         name: string; password: string;
     }>()
     try {
@@ -109,7 +109,7 @@ userRouter.get('/replies', async c => {
 // set password
 userRouter.put('/password', async c => {
     const signedInUser = c.get('signedInUser')
-    const { oldPassword, newPassword } = await c.req.parseBody<{
+    const { oldPassword, newPassword } = await c.req.json<{
         oldPassword: string; newPassword: string;
     }>()
     try {
@@ -123,7 +123,7 @@ userRouter.put('/password', async c => {
 // set about
 userRouter.put('/about', async c => {
     const signedInUser = c.get('signedInUser')
-    const { about } = await c.req.parseBody<{
+    const { about } = await c.req.json<{
         about: string;
     }>()
     try {
