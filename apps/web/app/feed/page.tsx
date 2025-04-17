@@ -1,3 +1,4 @@
+"use client"
 import { Header, useSessionStore } from "../utils";
 
 const components: { title: string; href: string; description: string; imageSrc: string; }[] = [
