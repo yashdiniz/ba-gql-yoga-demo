@@ -13,15 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useSessionStore } from "./utils";
 import { SERVER } from "@/env";
-
-const formSchema = z.object({
-  name: z.string().
-    min(2, 'Usernames must be at least 2 characters').
-    max(17, 'Usernames cannot be longer than 17 characters').
-    regex(/^[0-9a-z_][0-9a-z_.]{1,16}$/, 'Usernames can only be alphanumeric lowercase without spaces'),
-  password: z.string().
-    min(8, 'Passwords must be at least 8 characters'),
-})
+import { redirect } from "next/navigation";
 
 export default function Login() {
   return (
@@ -44,9 +36,18 @@ export default function Login() {
  )
 }
 
+const signInFormSchema = z.object({
+  name: z.string().
+    min(2, 'Usernames must be at least 2 characters').
+    max(17, 'Usernames cannot be longer than 17 characters').
+    regex(/^[0-9a-z_][0-9a-z_.]{1,16}$/, 'Usernames can only be alphanumeric lowercase without spaces'),
+  password: z.string().
+    min(8, 'Passwords must be at least 8 characters'),
+})
+
 function SignInCard() {
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(signInFormSchema),
     defaultValues: {
       name: '',
       password: '',
@@ -57,7 +58,7 @@ function SignInCard() {
     variant: "default" | "destructive"; title: string; description: string;
   } | null>(null)
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof signInFormSchema>) {
     const res = await fetch(`${SERVER}/user/login`, {
       method: 'post',
       body: JSON.stringify(values),
@@ -67,17 +68,17 @@ function SignInCard() {
         name: string; id: string; token: string;
       } = await res.json()
       setActionRes(null)
-      useSessionStore(s => s.setAll({
+      useSessionStore.setState({
         name: data.name,
         id: data.id,
         token: data.token,
-      }))
+      })
+      redirect('/feed')
     } else {
       const description = await res.text()
       setActionRes({
         title: 'Sign In Error', description, variant: 'destructive',
       })
-      console.log(values)
     }
   }
 
@@ -127,12 +128,33 @@ function SignInCard() {
   )
 }
 
+const signUpFormSchema = z.object({
+  name: z.string().
+    min(2, 'Usernames must be at least 2 characters').
+    max(17, 'Usernames cannot be longer than 17 characters').
+    regex(/^[0-9a-z_][0-9a-z_.]{1,16}$/, 'Usernames can only be alphanumeric lowercase without spaces'),
+  password: z.string().
+    min(8, 'Passwords must be at least 8 characters'),
+  confirmPassword: z.string().
+    min(8, 'Passwords must be at least 8 characters').
+    optional(),
+}).superRefine(({confirmPassword,password}, ctx) => {
+  if (confirmPassword !== password) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'The passwords did not match',
+      path: ['confirmPassword'],
+    })
+  }
+})
+
 function SignUpCard() {
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(signUpFormSchema),
     defaultValues: {
       name: '',
       password: '',
+      confirmPassword: '',
     }
   })
 
@@ -140,7 +162,7 @@ function SignUpCard() {
     variant: "default" | "destructive"; title: string; description: string;
   } | null>(null)
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof signUpFormSchema>) {
     const res = await fetch(`${SERVER}/user/create`, {
       method: 'post',
       body: JSON.stringify(values),
@@ -150,17 +172,17 @@ function SignUpCard() {
         name: string; id: string; token: string;
       } = await res.json()
       setActionRes(null)
-      useSessionStore(s => s.setAll({
+      useSessionStore.setState({
         name: data.name,
         id: data.id,
         token: data.token,
-      }))
+      })
+      redirect('/feed')
     } else {
       const description = await res.text()
       setActionRes({
         title: 'Sign Up Error', description, variant: 'destructive',
       })
-      console.log(values)
     }
   }
 
@@ -189,6 +211,19 @@ function SignUpCard() {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter password" type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input placeholder="Repeat password" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
