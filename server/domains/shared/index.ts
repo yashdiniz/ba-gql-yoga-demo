@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { hash, compare } from 'bcryptjs'
 import { eq } from 'drizzle-orm';
+import env from '@/env';
 
 const { sign, verify, TokenExpiredError } = jwt
 
@@ -94,10 +95,10 @@ export async function getServerAuthSession(req: Request):
  * Wrapper for JWT sign with payload type checking
  * */
 export function jwtSign(payload: string) {
-    return sign({ id: payload }, process.env.JWT_KEY!, {
+    return sign({ id: payload }, env.JWT_KEY!, {
         algorithm: "HS256",
-        issuer: process.env.JWT_ISSUER,
-        audience: process.env.JWT_AUDIENCE,
+        issuer: env.JWT_ISSUER,
+        audience: env.JWT_AUDIENCE,
         subject: payload,
         expiresIn: "1h",
     })
@@ -108,10 +109,10 @@ export function jwtSign(payload: string) {
  * */
 export function jwtVerify(token: string) {
     try {
-        return verify(token, process.env.JWT_KEY!, {
+        return verify(token, env.JWT_KEY!, {
             algorithms: ["HS256"],
-            issuer: process.env.JWT_ISSUER,
-            audience: process.env.JWT_AUDIENCE,
+            issuer: env.JWT_ISSUER,
+            audience: env.JWT_AUDIENCE,
         })
     } catch (e) {
         if (e instanceof TokenExpiredError) {

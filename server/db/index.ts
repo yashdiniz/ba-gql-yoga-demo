@@ -2,10 +2,11 @@ import 'dotenv/config'
 
 import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from './schema'
+import env from '@/env'
 
 export const db = drizzle({
     connection: {
-        url: process.env.DATABASE_URL!,
+        url: env.DATABASE_URL!,
     },
     schema,
 })
