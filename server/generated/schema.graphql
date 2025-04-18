@@ -2,23 +2,86 @@
 ### Do not make changes to this file directly
 
 
+interface Comment implements Node {
+  """Author of the `Comment`"""
+  author: User!
+
+  """`Comment` creation time"""
+  createdAt: Date!
+
+  """Has the `User` signed in voted on the `Comment` already?"""
+  hasVoted: Boolean!
+
+  """Unique identifier for the resource"""
+  id: ID!
+
+  """Number of votes on the `Comment`"""
+  voteCount: Int!
+}
+
 """
 The `Date` custom scalar type represents dates (sent over in integer form)
 """
 scalar Date
 
+type Link implements Comment & Node {
+  """Author of the `Comment`"""
+  author: User!
+
+  """`Link` content"""
+  content: String
+
+  """`Comment` creation time"""
+  createdAt: Date!
+
+  """Has the `User` signed in voted on the `Comment` already?"""
+  hasVoted: Boolean!
+
+  """Unique identifier for the resource"""
+  id: ID!
+
+  """Get nested replies of a root `Link`."""
+  replies: [Reply]!
+
+  """`Link` title"""
+  title: String!
+
+  """Number of votes on the `Comment`"""
+  voteCount: Int!
+}
+
+type LinkConnection {
+  """
+  https://facebook.github.io/relay/graphql/connections.htm#sec-Edge-Types
+  """
+  edges: [LinkEdge]
+
+  """
+  https://facebook.github.io/relay/graphql/connections.htm#sec-undefined.PageInfo
+  """
+  pageInfo: PageInfo!
+}
+
+type LinkEdge {
+  """https://facebook.github.io/relay/graphql/connections.htm#sec-Cursor"""
+  cursor: String!
+
+  """https://facebook.github.io/relay/graphql/connections.htm#sec-Node"""
+  node: Link
+}
+
 type Mutation {
-  """Delete a `Reply`"""
+  """Delete a `Comment`"""
   delete(replyId: ID!): Boolean!
 
-  """Post a `Reply` (Link) to the feed"""
-  post(content: String, title: String!): Reply!
+  """Post a `Link` to the feed"""
+  post(content: String, title: String!): Link!
 
-  """`Reply` to another reply (nested comment support)"""
+  """`Reply` to a `Comment` (nested comment support)"""
   reply(content: String!, parentId: ID!): Reply!
   setAbout(about: String): User!
 
-  """Vote on a `Reply`"""
+  """Vote on a `Comment`"""
   vote(replyId: ID!, type: VoteType!): Boolean!
 }
 
@@ -53,6 +116,9 @@ type PageInfo {
 }
 
 type Query {
+  """Get `Comment` by ID"""
+  comment(id: ID!): Comment!
+
   """Get the feed"""
   feed(
     """Returns the elements in the list that come after the specified cursor"""
@@ -60,49 +126,35 @@ type Query {
 
     """Returns the first n elements from the list."""
     first: Int!
-  ): ReplyConnection
+  ): LinkConnection
 
   """Get profile of `User` by name or ID"""
   profile(id: ID, name: String): User!
-
-  """
-  Get nested replies of a root `Link`. NOTE: only works for `Link`s, will fail for non-links.
-  """
-  replies(rootId: ID!): [Reply]!
-
-  """Get reply by ID"""
-  reply(id: ID!): Reply!
 }
 
-type Reply implements Node {
-  """Author of the `Reply`"""
+type Reply implements Comment & Node {
+  """Author of the `Comment`"""
   author: User!
 
   """`Reply` content"""
   content: String
 
-  """`Reply` creation time"""
+  """`Comment` creation time"""
   createdAt: Date!
 
-  """Has the `User` signed in voted on the post already?"""
+  """Has the `User` signed in voted on the `Comment` already?"""
   hasVoted: Boolean!
 
   """Unique identifier for the resource"""
   id: ID!
 
-  """Is the `Reply` a link?"""
-  isLink: Boolean!
-
   """Parent of the `Reply`"""
-  parent: Reply
+  parent: Comment
 
   """Root of the `Reply`"""
-  root: Reply
+  root: Link
 
-  """`Reply` title (only used in Links/Posts)"""
-  title: String
-
-  """Number of votes on the `Reply`"""
+  """Number of votes on the `Comment`"""
   voteCount: Int!
 }
 
@@ -126,7 +178,7 @@ type ReplyEdge {
   node: Reply
 }
 
-enum ReplyType {
+enum ReplyTypeInput {
   LINKS
   LINKS_REPLIES
   REPLIES
@@ -159,7 +211,7 @@ type User implements Node {
 
     """Returns the last n elements from the list."""
     last: Int
-    type: ReplyType!
+    type: ReplyTypeInput!
     userId: ID!
   ): ReplyConnection
 }

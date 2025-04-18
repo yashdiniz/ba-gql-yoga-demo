@@ -40,7 +40,7 @@ export interface NexusGenInputs {
 }
 
 export interface NexusGenEnums {
-  ReplyType: "LINKS" | "LINKS_REPLIES" | "REPLIES" | "VOTED"
+  ReplyTypeInput: "LINKS" | "LINKS_REPLIES" | "REPLIES" | "VOTED"
   VoteType: "NO" | "UP"
 }
 
@@ -54,6 +54,21 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
+  Link: { // root type
+    content?: string | null; // String
+    createdAt: NexusGenScalars['Date']; // Date!
+    hasVoted: boolean; // Boolean!
+    id: string; // ID!
+    title: string; // String!
+  }
+  LinkConnection: { // root type
+    edges?: Array<NexusGenRootTypes['LinkEdge'] | null> | null; // [LinkEdge]
+    pageInfo: NexusGenRootTypes['PageInfo']; // PageInfo!
+  }
+  LinkEdge: { // root type
+    cursor: string; // String!
+    node?: NexusGenRootTypes['Link'] | null; // Link
+  }
   Mutation: {};
   PageInfo: { // root type
     endCursor?: string | null; // String
@@ -67,8 +82,6 @@ export interface NexusGenObjects {
     createdAt: NexusGenScalars['Date']; // Date!
     hasVoted: boolean; // Boolean!
     id: string; // ID!
-    isLink: boolean; // Boolean!
-    title?: string | null; // String
   }
   ReplyConnection: { // root type
     edges?: Array<NexusGenRootTypes['ReplyEdge'] | null> | null; // [ReplyEdge]
@@ -87,7 +100,8 @@ export interface NexusGenObjects {
 }
 
 export interface NexusGenInterfaces {
-  Node: NexusGenRootTypes['Reply'] | NexusGenRootTypes['User'];
+  Comment: NexusGenRootTypes['Link'] | NexusGenRootTypes['Reply'];
+  Node: NexusGenRootTypes['Link'] | NexusGenRootTypes['Reply'] | NexusGenRootTypes['User'];
 }
 
 export interface NexusGenUnions {
@@ -98,9 +112,27 @@ export type NexusGenRootTypes = NexusGenInterfaces & NexusGenObjects
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars & NexusGenEnums
 
 export interface NexusGenFieldTypes {
+  Link: { // field return type
+    author: NexusGenRootTypes['User']; // User!
+    content: string | null; // String
+    createdAt: NexusGenScalars['Date']; // Date!
+    hasVoted: boolean; // Boolean!
+    id: string; // ID!
+    replies: Array<NexusGenRootTypes['Reply'] | null>; // [Reply]!
+    title: string; // String!
+    voteCount: number; // Int!
+  }
+  LinkConnection: { // field return type
+    edges: Array<NexusGenRootTypes['LinkEdge'] | null> | null; // [LinkEdge]
+    pageInfo: NexusGenRootTypes['PageInfo']; // PageInfo!
+  }
+  LinkEdge: { // field return type
+    cursor: string; // String!
+    node: NexusGenRootTypes['Link'] | null; // Link
+  }
   Mutation: { // field return type
     delete: boolean; // Boolean!
-    post: NexusGenRootTypes['Reply']; // Reply!
+    post: NexusGenRootTypes['Link']; // Link!
     reply: NexusGenRootTypes['Reply']; // Reply!
     setAbout: NexusGenRootTypes['User']; // User!
     vote: boolean; // Boolean!
@@ -112,10 +144,9 @@ export interface NexusGenFieldTypes {
     startCursor: string | null; // String
   }
   Query: { // field return type
-    feed: NexusGenRootTypes['ReplyConnection'] | null; // ReplyConnection
+    comment: NexusGenRootTypes['Comment']; // Comment!
+    feed: NexusGenRootTypes['LinkConnection'] | null; // LinkConnection
     profile: NexusGenRootTypes['User']; // User!
-    replies: Array<NexusGenRootTypes['Reply'] | null>; // [Reply]!
-    reply: NexusGenRootTypes['Reply']; // Reply!
   }
   Reply: { // field return type
     author: NexusGenRootTypes['User']; // User!
@@ -123,10 +154,8 @@ export interface NexusGenFieldTypes {
     createdAt: NexusGenScalars['Date']; // Date!
     hasVoted: boolean; // Boolean!
     id: string; // ID!
-    isLink: boolean; // Boolean!
-    parent: NexusGenRootTypes['Reply'] | null; // Reply
-    root: NexusGenRootTypes['Reply'] | null; // Reply
-    title: string | null; // String
+    parent: NexusGenRootTypes['Comment'] | null; // Comment
+    root: NexusGenRootTypes['Link'] | null; // Link
     voteCount: number; // Int!
   }
   ReplyConnection: { // field return type
@@ -144,15 +173,40 @@ export interface NexusGenFieldTypes {
     name: string; // String!
     replies: NexusGenRootTypes['ReplyConnection'] | null; // ReplyConnection
   }
+  Comment: { // field return type
+    author: NexusGenRootTypes['User']; // User!
+    createdAt: NexusGenScalars['Date']; // Date!
+    hasVoted: boolean; // Boolean!
+    id: string; // ID!
+    voteCount: number; // Int!
+  }
   Node: { // field return type
     id: string; // ID!
   }
 }
 
 export interface NexusGenFieldTypeNames {
+  Link: { // field return type name
+    author: 'User'
+    content: 'String'
+    createdAt: 'Date'
+    hasVoted: 'Boolean'
+    id: 'ID'
+    replies: 'Reply'
+    title: 'String'
+    voteCount: 'Int'
+  }
+  LinkConnection: { // field return type name
+    edges: 'LinkEdge'
+    pageInfo: 'PageInfo'
+  }
+  LinkEdge: { // field return type name
+    cursor: 'String'
+    node: 'Link'
+  }
   Mutation: { // field return type name
     delete: 'Boolean'
-    post: 'Reply'
+    post: 'Link'
     reply: 'Reply'
     setAbout: 'User'
     vote: 'Boolean'
@@ -164,10 +218,9 @@ export interface NexusGenFieldTypeNames {
     startCursor: 'String'
   }
   Query: { // field return type name
-    feed: 'ReplyConnection'
+    comment: 'Comment'
+    feed: 'LinkConnection'
     profile: 'User'
-    replies: 'Reply'
-    reply: 'Reply'
   }
   Reply: { // field return type name
     author: 'User'
@@ -175,10 +228,8 @@ export interface NexusGenFieldTypeNames {
     createdAt: 'Date'
     hasVoted: 'Boolean'
     id: 'ID'
-    isLink: 'Boolean'
-    parent: 'Reply'
-    root: 'Reply'
-    title: 'String'
+    parent: 'Comment'
+    root: 'Link'
     voteCount: 'Int'
   }
   ReplyConnection: { // field return type name
@@ -195,6 +246,13 @@ export interface NexusGenFieldTypeNames {
     id: 'ID'
     name: 'String'
     replies: 'ReplyConnection'
+  }
+  Comment: { // field return type name
+    author: 'User'
+    createdAt: 'Date'
+    hasVoted: 'Boolean'
+    id: 'ID'
+    voteCount: 'Int'
   }
   Node: { // field return type name
     id: 'ID'
@@ -223,6 +281,9 @@ export interface NexusGenArgTypes {
     }
   }
   Query: {
+    comment: { // args
+      id: string; // ID!
+    }
     feed: { // args
       after?: string | null; // String
       first: number; // Int!
@@ -231,12 +292,6 @@ export interface NexusGenArgTypes {
       id?: string | null; // ID
       name?: string | null; // String
     }
-    replies: { // args
-      rootId: string; // ID!
-    }
-    reply: { // args
-      id: string; // ID!
-    }
   }
   User: {
     replies: { // args
@@ -244,19 +299,22 @@ export interface NexusGenArgTypes {
       before?: string | null; // String
       first?: number | null; // Int
       last?: number | null; // Int
-      type: NexusGenEnums['ReplyType']; // ReplyType!
+      type: NexusGenEnums['ReplyTypeInput']; // ReplyTypeInput!
       userId: string; // ID!
     }
   }
 }
 
 export interface NexusGenAbstractTypeMembers {
-  Node: "Reply" | "User"
+  Comment: "Link" | "Reply"
+  Node: "Link" | "Reply" | "User"
 }
 
 export interface NexusGenTypeInterfaces {
-  Reply: "Node"
+  Link: "Comment" | "Node"
+  Reply: "Comment" | "Node"
   User: "Node"
+  Comment: "Node"
 }
 
 export type NexusGenObjectNames = keyof NexusGenObjects;
@@ -273,7 +331,7 @@ export type NexusGenUnionNames = never;
 
 export type NexusGenObjectsUsingAbstractStrategyIsTypeOf = never;
 
-export type NexusGenAbstractsUsingStrategyResolveType = "Node";
+export type NexusGenAbstractsUsingStrategyResolveType = "Comment" | "Node";
 
 export type NexusGenFeaturesConfig = {
   abstractTypeStrategies: {

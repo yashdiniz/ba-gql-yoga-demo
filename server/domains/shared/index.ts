@@ -13,7 +13,7 @@ export const USERNAME_REGEX = /^[0-9a-z_][0-9a-z_.]{1,16}$/
 
 export type Reply = {
     id: string;
-    isLink: boolean;
+    type: 'LINK' | 'REPLY';
     createdAt: Date;
     rootId: string | null;
     parentId: string | null;

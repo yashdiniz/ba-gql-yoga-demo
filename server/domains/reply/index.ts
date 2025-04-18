@@ -81,6 +81,7 @@ class ReplySvc implements ReplyService {
         if (replyResult && replyResult.root)
             return {
                 ...replyResult.root,
+                type: replyResult.root.isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
                 hasVoted: replyResult.root.votes?.length > 0,
                 // NOTE: if the reply is deleted, return `title` and `content` as deleted.
                 title: replyResult.root.isDeleted ? '[deleted]' : replyResult.root.title,
@@ -111,6 +112,7 @@ class ReplySvc implements ReplyService {
         if (replyResult && replyResult.parent)
             return {
                 ...replyResult.parent,
+                type: replyResult.parent.isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
                 hasVoted: replyResult.parent.votes?.length > 0,
                 // NOTE: if the reply is deleted, return `title` and `content` as deleted.
                 title: replyResult.parent.isDeleted ? '[deleted]' : replyResult.parent.title,
@@ -136,6 +138,7 @@ class ReplySvc implements ReplyService {
         if (replyResult)
             return {
                 ...replyResult,
+                type: replyResult.isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
                 hasVoted: replyResult.votes?.length > 0,
                 // NOTE: if the reply is deleted, return `title` and `content` as deleted.
                 title: replyResult.isDeleted ? '[deleted]' : replyResult.title,
@@ -170,6 +173,7 @@ class ReplySvc implements ReplyService {
 
         const res = results.map(p => ({
             ...p,
+            type: p.isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
             hasVoted: p.votes.length > 0,
         }))
 
@@ -196,6 +200,7 @@ class ReplySvc implements ReplyService {
 
         const res = results.map(p => ({
             ...p,
+            type: p.isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
             // NOTE: if the reply is deleted, return `title` and `content` as deleted.
             title: p.isDeleted ? '[deleted]' : p.title,
             content: p.isDeleted ? '[deleted]' : p.content,
@@ -265,6 +270,7 @@ class ReplySvc implements ReplyService {
 
         return {
             ...res[0],
+            type: res[0].isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
             hasVoted: false,
         }
     }
@@ -296,6 +302,7 @@ class ReplySvc implements ReplyService {
 
         return {
             ...res[0],
+            type: res[0].isLink ? 'LINK' : 'REPLY' as ReplyOutput['type'],
             hasVoted: false,
         }
     }

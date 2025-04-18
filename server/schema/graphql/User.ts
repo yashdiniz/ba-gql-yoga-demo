@@ -6,8 +6,8 @@ import { newUserService } from "@/domains/user";
 
 const userSvc = newUserService();
 
-const ReplyType = enumType({
-    name: 'ReplyType',
+const ReplyTypeInput = enumType({
+    name: 'ReplyTypeInput',
     members: ['LINKS_REPLIES', 'LINKS', 'REPLIES', 'VOTED'],
 })
 
@@ -19,7 +19,7 @@ export const User = objectType({
             type: Reply,
             description: 'Replies by the `User`',
             additionalArgs: {
-                type: nonNull(ReplyType),
+                type: nonNull(ReplyTypeInput),
                 userId: nonNull(idArg()),
             },
             nodes(root, args, ctx, info) {
