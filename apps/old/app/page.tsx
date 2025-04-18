@@ -2,8 +2,8 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,23 +17,23 @@ import { redirect } from "next/navigation";
 
 export default function Login() {
   return (
-  <div className="flex h-screen">
-    <Card className="m-auto w-[500px]">
-      <CardTitle className="px-6">BA Social</CardTitle>
-      <CardDescription className="px-6">Welcome to Blue Altair Social! We Altairians really have a lot to share.</CardDescription>
-      <CardContent>
-        <Tabs defaultValue="signin">
-          <TabsList>
-            <TabsTrigger value='signin'>Sign In</TabsTrigger>
-            <TabsTrigger value='signup'>Sign Up</TabsTrigger>
-          </TabsList>
-          <TabsContent value='signin'><SignInCard/></TabsContent>
-          <TabsContent value='signup'><SignUpCard/></TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  </div>
- )
+    <div className="flex h-screen">
+      <Card className="m-auto w-[500px]">
+        <CardTitle className="px-6">BA Social</CardTitle>
+        <CardDescription className="px-6">Welcome to Blue Altair Social! We Altairians really have a lot to share.</CardDescription>
+        <CardContent>
+          <Tabs defaultValue="signin">
+            <TabsList>
+              <TabsTrigger value='signin'>Sign In</TabsTrigger>
+              <TabsTrigger value='signup'>Sign Up</TabsTrigger>
+            </TabsList>
+            <TabsContent value='signin'><SignInCard /></TabsContent>
+            <TabsContent value='signup'><SignUpCard /></TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
 
 const signInFormSchema = z.object({
@@ -82,7 +82,7 @@ function SignInCard() {
     }
   }
 
-  return(
+  return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       <div className="grid w-full items-center gap-4">
         <Form {...form}>
@@ -138,7 +138,7 @@ const signUpFormSchema = z.object({
   confirmPassword: z.string().
     min(8, 'Passwords must be at least 8 characters').
     optional(),
-}).superRefine(({confirmPassword,password}, ctx) => {
+}).superRefine(({ confirmPassword, password }, ctx) => {
   if (confirmPassword !== password) {
     ctx.addIssue({
       code: 'custom',
@@ -186,7 +186,7 @@ function SignUpCard() {
     }
   }
 
-  return(
+  return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       <div className="grid w-full items-center gap-4">
         <Form {...form}>

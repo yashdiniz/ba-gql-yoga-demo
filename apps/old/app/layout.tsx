@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SERVER } from "@/env";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('http://localhost:3000'), // TODO: change URL before deploying
+  metadataBase: new URL(SERVER),
   title: "Blue Altair Social",
   description: 'Welcome to Blue Altair Social! Built this site is for a GraphQL vs REST API demo',
   icons: '/favicon.webp',
@@ -48,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+          {children}
       </body>
     </html>
   );
