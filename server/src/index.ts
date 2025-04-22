@@ -24,7 +24,7 @@ const yoga = createYoga({
 
 app.use(logger())
 app.use('*', cors({
-  origin: ['http://localhost:3000'], // TODO: CHANGE THIS ACCORDINGLY
+  origin: ['http://localhost:5173'], // TODO: CHANGE THIS ACCORDINGLY
   credentials: true,
 }))
 
@@ -59,7 +59,7 @@ app.use('/gql', async (c) => {
 
 serve({
   fetch: app.fetch,
-  port: 3001
+  port: 3000
 }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`)
 })

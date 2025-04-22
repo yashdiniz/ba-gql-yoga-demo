@@ -11,42 +11,41 @@ post {
 }
 
 body:graphql {
-  {
-    feed(first: 2, after:"MUhKQWtxRnBvWGFtY21aTFRHSjR3QT09") {
-      edges {
-        node {
-          id
-          title
-          content
-          author {
-            id
-          }
-        }
-        cursor
-      }
-      pageInfo {
-        hasNextPage
-      }
-    }
-    # replies(rootId: "r8_fpE") {
-    #   parent{
-    #     id
-    #   }
-    #   id
-    #   title
-    #   content
-    #   author {
-    #     id
-    #   }
-    # }
-  }
-  # mutation {
-  #   reply(
-  #     parentId: "r2y5g-"
-  #     content:"I think they removed arenas again."
-  #   ) {
-  #     id
+  # {
+  #   feed(first: 2, after:"MUhKQWtxRnBvWGFtY21aTFRHSjR3QT09") {
+  #     edges {
+  #       node {
+  #         id
+  #         title
+  #         content
+  #         author {
+  #           id
+  #         }
+  #       }
+  #       cursor
+  #     }
+  #     pageInfo {
+  #       hasNextPage
+  #     }
   #   }
+  #   # replies(rootId: "r8_fpE") {
+  #   #   parent{
+  #   #     id
+  #   #   }
+  #   #   id
+  #   #   title
+  #   #   content
+  #   #   author {
+  #   #     id
+  #   #   }
+  #   # }
   # }
-  
+  mutation {
+    post(
+      title: "A live view of the London Underground"
+      content: "https://www.londonunderground.live/"
+    ){
+      id
+    }
+  }
 }
