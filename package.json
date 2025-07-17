@@ -6,8 +6,8 @@
   "author": "yashdiniz <26359876+yashdiniz@users.noreply.github.com>",
   "license": "ISC",
   "workspaces": [
-    "app/*",
-    "server/*"
+    "app",
+    "server"
   ],
   "private": true
 }

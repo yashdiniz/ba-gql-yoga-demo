@@ -11,41 +11,45 @@ post {
 }
 
 body:graphql {
-  # {
-  #   feed(first: 2, after:"MUhKQWtxRnBvWGFtY21aTFRHSjR3QT09") {
-  #     edges {
-  #       node {
-  #         id
-  #         title
-  #         content
-  #         author {
-  #           id
-  #         }
-  #       }
-  #       cursor
-  #     }
-  #     pageInfo {
-  #       hasNextPage
-  #     }
-  #   }
-  #   # replies(rootId: "r8_fpE") {
-  #   #   parent{
-  #   #     id
-  #   #   }
-  #   #   id
-  #   #   title
-  #   #   content
-  #   #   author {
-  #   #     id
-  #   #   }
-  #   # }
-  # }
-  mutation {
-    post(
-      title: "A live view of the London Underground"
-      content: "https://www.londonunderground.live/"
-    ){
-      id
+  {
+    feed(first: 2) {
+      edges {
+        node {
+          id
+          title
+          content
+          author {
+            id
+            name
+          }
+          replies {
+            parent {
+              id
+            }
+            id
+            content
+            author {
+              id name
+            }
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+      }
     }
   }
+  # mutation {
+  #   # post(
+  #   #   title: "A live view of the London Underground"
+  #   #   content: "https://www.londonunderground.live/"
+  #   # ){
+  #   #   id
+  #   # }
+  #   reply(parentId:"r3uJi0" content: "test reply") {
+  #     id
+  #   }
+  # }
+  
 }

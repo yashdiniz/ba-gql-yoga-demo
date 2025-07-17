@@ -2,11 +2,12 @@ import env from "@/env";
 import {
     Store,
     RecordSource,
-    Environment,
     Network,
     Observable,
+    type FetchFunction,
+    type IEnvironment,
+    Environment,
 } from "relay-runtime";
-import type { FetchFunction, IEnvironment } from "relay-runtime";
 import { useSessionStore } from "./sessionStore";
 
 const fetchFn: FetchFunction = (params, variables) => {
