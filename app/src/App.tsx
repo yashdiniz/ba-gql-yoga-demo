@@ -7,7 +7,7 @@ import z from 'zod';
 import { useState } from "react";
 import env from '@/env';
 import { useSessionStore } from "./utils";
-import { redirect } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./components/ui/form";
 import { Input } from "./components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
@@ -45,6 +45,7 @@ const signInFormSchema = z.object({
 })
 
 function SignInCard() {
+  const navigate = useNavigate();
   const form = useForm({
     resolver: zodResolver(signInFormSchema),
     defaultValues: {
@@ -67,12 +68,12 @@ function SignInCard() {
         name: string; id: string; token: string;
       } = await res.json()
       setActionRes(null)
-      useSessionStore.setState({
+      useSessionStore.getState().setAll({
         name: data.name,
         id: data.id,
         token: data.token,
       })
-      redirect('/feed')
+      navigate('/feed')
     } else {
       const description = await res.text()
       setActionRes({
@@ -148,6 +149,7 @@ const signUpFormSchema = z.object({
 })
 
 function SignUpCard() {
+  const navigate = useNavigate();
   const form = useForm({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
@@ -171,12 +173,12 @@ function SignUpCard() {
         name: string; id: string; token: string;
       } = await res.json()
       setActionRes(null)
-      useSessionStore.setState({
+      useSessionStore.getState().setAll({
         name: data.name,
         id: data.id,
         token: data.token,
       })
-      redirect('/feed')
+      navigate('/feed')
     } else {
       const description = await res.text()
       setActionRes({
