@@ -3,16 +3,17 @@ import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMe
 import { cn } from '@/lib/utils';
 import React, { useEffect } from 'react';
 import { useSessionStore } from './sessionStore';
-import { redirect } from 'react-router-dom';
+import { redirect, useNavigate } from 'react-router-dom';
 
 // export const fetcher = (...args) => fetch(...args).then(res => res.json())
 
 type Components = { title: string; href: string; description: string; imageSrc: string; }[]
 
 export function Header({ components }: { components: Components }) {
+  const navigate = useNavigate()
   const token = useSessionStore(s => s.token)
   useEffect(() => {
-    if (token === null) redirect('/')
+    if (token === null) navigate('/login')
   }, [token])
 
   return (
@@ -42,8 +43,11 @@ export function Header({ components }: { components: Components }) {
                   <NavigationMenuLink asChild>
                     <div
                       className='flex flex-col select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
-                      onClick={() => useSessionStore.setState({ id: null, name: null, token: null, })}
-                    >
+                      onClick={() => {
+                        useSessionStore.setState({ id: null, name: null, token: null, })
+                        navigate('/login')
+                      }
+                      }>
                       <span className="text-sm font-medium leading-none">Logout</span>
                       <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                         Logout here

@@ -1,7 +1,6 @@
 import React from "react";
 // import { graphql } from "relay-runtime";
 import { graphql } from "react-relay";
-import RelayEnvironment from "./utils/RelayEnvironment";
 import { Header } from "./utils";
 import { useLazyLoadQuery } from "react-relay";
 import FlatList from 'flatlist-react';
@@ -86,9 +85,7 @@ function FeedContent() {
 }
 
 export default function FeedPage() {
-    return (
-        <RelayEnvironment>
-            <FeedContent />
-        </RelayEnvironment>
-    );
+  return (
+    <FeedContent />
+  );
 }
