@@ -78,7 +78,6 @@ export interface NexusGenObjects {
   }
   Query: {};
   Reply: { // root type
-    content?: string | null; // String
     createdAt: NexusGenScalars['Date']; // Date!
     hasVoted: boolean; // Boolean!
     id: string; // ID!

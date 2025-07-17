@@ -29,6 +29,9 @@ export const Reply = objectType({
         })
         t.string('content', {
             description: '`Reply` content',
+            resolve(parent, args, ctx, info) {
+                return parent.title
+            }
         })
     },
 })
